@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Safidy Decision Engine</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f4f7f6; margin: 0; padding: 15px; color: #333; }
+        .container { max-width: 600px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        h1 { color: #0077b6; font-size: 22px; text-align: center; }
+        .section { margin-bottom: 25px; padding-bottom: 15px; border-bottom: 1px solid #eee; }
+        label { display: block; margin-top: 10px; font-weight: bold; font-size: 14px; }
+        input, textarea, select { width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
+        button { background-color: #0077b6; color: white; border: none; padding: 12px; width: 100%; border-radius: 5px; font-size: 16px; margin-top: 15px; cursor: pointer; }
+        button:hover { background-color: #023e8a; }
+        #status-msg { margin-top: 15px; padding: 10px; text-align: center; border-radius: 5px; font-weight: bold; }
+        .success { background-color: #d4edda; color: #155724; }
+        .error { background-color: #f8d7da; color: #721c24; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>🏛️ Safidy Decision Engine</h1>
+    <p style="text-align: center; font-size: 13px; color: #666;">Ingestion de concertations et Audit Citoyen</p>
+
+    <!-- FORMULAIRE RAPPORT DE CONCERTATION -->
+    <div class="section">
+        <h3>1. Enregistrer une Concertation</h3>
+        <label>Titre de la concertation</label>
+        <input type="text" id="titre-concertation" placeholder="Ex: Atelier Régional Analamanga">
+
+        <label>Organisation Source</label>
+        <input type="text" id="org-source" placeholder="Ex: Association Safidy">
+
+        <label>Résumé Global</label>
+        <textarea id="resume-concertation" rows="3" placeholder="Points clés de la concertation..."></textarea>
+        
+        <button onclick="enregistrerConcertation()">Enregistrer la Concertation</button>
+    </div>
+
+    <!-- FORMULAIRE AUDIT CITOYEN -->
+    <div class="section">
+        <h3>2. Signalement Audit Citoyen</h3>
+        <label>Titre du signalement</label>
+        <input type="text" id="titre-signalement" placeholder="Ex: Problème d'infrastructure locale">
+
+        <label>Description / Détails</label>
+        <textarea id="desc-signalement" rows="3" placeholder="Décrivez le problème constaté..."></textarea>
+
+        <label>Localisation</label>
+        <input type="text" id="localisation" placeholder="Ex: Antananarivo - Enceinte ...">
+
+        <button onclick="enregistrerSignalement()">Envoyer le Signalement</button>
+    </div>
+
+    <div id="status-msg"></div>
+</div>
+
+<script>
+    // Configuration Supabase (À configurer avec vos propres identifiants récupérés)
+    const SUPABASE_URL = 'VOTRE_PROJECT_URL';
+    const SUPABASE_ANON_KEY = 'VOTRE_PUBLISHABLE_KEY';
+    
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    async function enregistrerConcertation() {
+        const titre = document.getElementById('titre-concertation').value;
+        const organisation = document.getElementById('org-source').value;
+        const resume = document.getElementById('resume-concertation').value;
+        const msg = document.getElementById('status-msg');
+
+        if(!titre || !organisation) {
+            showMsg("Veuillez remplir au moins le titre et l'organisation.", "error");
+            return;
+        }
+
+        const { data, error } = await supabaseClient
+            .from('rapports_concertation')
+            .insert([{ titre: titre, organisation_source: organisation, resume_global: resume }]);
+
+        if (error) {
+            showMsg("Erreur : " + error.message, "error");
+        } else {
+            showMsg("Concertation enregistrée avec succès dans Supabase !", "success");
+            document.getElementById('titre-concertation').value = '';
+            document.getElementById('org-source').value = '';
+            document.getElementById('resume-concertation').value = '';
+        }
+    }
+
+    async function enregistrerSignalement() {
+        const titre = document.getElementById('titre-signalement').value;
+        const description = document.getElementById('desc-signalement').value;
+        const localisation = document.getElementById('localisation').value;
+        const msg = document.getElementById('status-msg');
+
+        if(!titre) {
+            showMsg("Veuillez renseigner le titre du signalement.", "error");
+            return;
+        }
+
+        const { data, error } = await supabaseClient
+            .from('audit_citoyen_signalements')
+            .insert([{ titre_signalement: titre, description: description, localisation: localisation }]);
+
+        if (error) {
+            showMsg("Erreur : " + error.message, "error");
+        } else {
+            showMsg("Signalement d'audit citoyen enregistré avec succès !", "success");
+            document.getElementById('titre-signalement').value = '';
+            document.getElementById('desc-signalement').value = '';
+            document.getElementById('localisation').value = '';
+        }
+    }
+
+    function showMsg(text, type) {
+        const msg = document.getElementById('status-msg');
+        msg.innerText = text;
+        msg.className = type;
+    }
+</script>
+
+</body>
+</html>
