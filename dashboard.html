@@ -23,7 +23,7 @@
         .kpi-card .value { font-size: 1.6rem; font-weight: bold; color: #102a43; margin-top: 8px; }
 
         /* Matrice SWOT Grid */
-        .swot-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px; }
+        .swot-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px; margin-bottom: 35px; }
         .swot-box { padding: 20px; border-radius: 8px; min-height: 180px; }
         .swot-box h2 { margin-top: 0; font-size: 1.2rem; border-bottom: 2px solid rgba(0,0,0,0.1); padding-bottom: 8px; }
         
@@ -34,7 +34,21 @@
 
         ul.swot-list { padding-left: 20px; margin-top: 10px; font-size: 0.95rem; line-height: 1.5; }
         
+        /* Section Module SMART */
+        .smart-section { background: #f0f4f8; border: 2px solid #0b69a3; padding: 20px; border-radius: 8px; margin-top: 20px; }
+        .smart-section h2 { color: #0b69a3; margin-top: 0; }
+        .smart-card { background: white; padding: 15px; border-radius: 6px; margin-top: 15px; border-left: 4px solid #10b981; }
+        .smart-card h4 { margin: 0 0 5px 0; color: #047857; }
+        .btn-export { background-color: #0b69a3; color: white; border: none; padding: 10px 18px; border-radius: 5px; font-weight: bold; cursor: pointer; margin-top: 15px; }
+        .btn-export:hover { background-color: #084c77; }
+
         #auth-status { text-align: right; font-size: 0.85rem; color: #627d98; margin-bottom: 10px; }
+        
+        @media print {
+            nav, #auth-status, .btn-export { display: none; }
+            body { background: white; margin: 0; }
+            .container { box-shadow: none; max-width: 100%; }
+        }
     </style>
 </head>
 <body>
@@ -46,7 +60,7 @@
         <a href="dashboard.html" class="active">📊 Decision Engine (SWOT)</a>
     </nav>
 
-    <div id="auth-status">Statut : 🟢 Connecté au moteur de décision</div>
+    <div id="auth-status">Statut : 🟢 Connexion sécurisée active</div>
 
     <h1>📊 Matrice Decision Engine (SWOT / TOWS)</h1>
     <p class="subtitle">Analyse consolidée des données citoyennes & Fiches d'Action SMART</p>
@@ -98,6 +112,23 @@
             </ul>
         </div>
     </div>
+
+    <!-- Section Moteur de Fiches d'Action SMART -->
+    <div class="smart-section">
+        <h2>🎯 Générateur de Fiche d'Action SMART</h2>
+        <p>Génération automatique d'objectifs de plaidoyer fondés sur les preuves factuelles agrégées :</p>
+        
+        <div id="smart-output" class="smart-card">
+            <h4>Plaidoyer Prioritaire #1 : Réduction des Surcoûts et Tracasseries Administratives</h4>
+            <p><strong>Specific (Spécifique) :</strong> Cibler la simplification des démarches administratives ayant engendré le plus de signalements d'irrégularités et de coûts informels.</p>
+            <p><strong>Measurable (Mesurable) :</strong> Visibilité directe sur un préjudice financier citoyen cumulé identifié à <span id="smart-pertes-val">--</span> Ar sur <span id="smart-audit-val">--</span> dossiers d'audit.</p>
+            <p><strong>Achievable (Atteignable) :</strong> S'appuyer sur les <span id="smart-concertation-val">--</span> propositions issues des concertations citoyennes pour soumettre une feuille de route de réforme au Ministère/Institution concerné.</p>
+            <p><strong>Relevant (Pertinent) :</strong> Réduire la pression de la corruption mesurée à un taux de <span id="smart-corruption-val">--</span> dans les signalements reçus.</p>
+            <p><strong>Time-bound (Temporel) :</strong> Présenter le rapport officiel de plaidoyer de Safidy Ifanomezantsoa d'ici la fin du trimestre en cours.</p>
+        </div>
+
+        <button onclick="window.print()" class="btn-export">🖨️ Imprimer / Exporter la Fiche de Plaidoyer (PDF)</button>
+    </div>
 </div>
 
 <script>
@@ -137,39 +168,47 @@
                 });
             }
 
-            // Mise à jour de l'affichage des KPI
+            const corruptionRate = auditCount > 0 ? Math.round((corruptionCases / auditCount) * 100) + "%" : "0%";
+            const totalPertesFormatted = totalPertes.toLocaleString('fr-FR') + " Ar";
+
+            // Mise à jour KPI
             document.getElementById('kpi-audit-count').innerText = auditCount;
             document.getElementById('kpi-concertations-count').innerText = concertationCount;
-            document.getElementById('kpi-pertes-total').innerText = totalPertes.toLocaleString('fr-FR') + " Ar";
-            document.getElementById('kpi-corruption-rate').innerText = auditCount > 0 ? Math.round((corruptionCases / auditCount) * 100) + "%" : "0%";
+            document.getElementById('kpi-pertes-total').innerText = totalPertesFormatted;
+            document.getElementById('kpi-corruption-rate').innerText = corruptionRate;
 
-            // Remplissage dynamique préliminaire SWOT
+            // Remplissage SWOT
             document.getElementById('swot-faiblesses').innerHTML = `
-                <li><strong>Problèmes administratifs documentés :</strong> ${auditCount} signalement(s).</li>
-                <li><strong>Coût total des tracasseries :</strong> ${totalPertes.toLocaleString('fr-FR')} Ar enregistrés.</li>
+                <li><strong>Dysfonctionnements documentés :</strong> ${auditCount} dossier(s) d'audit enregistrés.</li>
+                <li><strong>Impact financier usagers :</strong> ${totalPertesFormatted} de pertes cumulées.</li>
             `;
 
             document.getElementById('swot-opportunites').innerHTML = `
-                <li><strong>Propositions citoyennes reçues :</strong> ${concertationCount} rapport(s) de concertation.</li>
-                <li>Plaidoyer appuyé par preuves factuelles chiffrées.</li>
+                <li><strong>Propositions citoyennes :</strong> ${concertationCount} rapport(s) d'orientation récolté(s).</li>
+                <li>Base factuelle solide pour l'élaboration de réformes ciblées.</li>
             `;
 
             document.getElementById('swot-forces').innerHTML = `
-                <li>Engagement citoyen actif et remontée de données en temps réel.</li>
-                <li>Plateforme de collecte autonome et sécurisée.</li>
+                <li>Système décisionnel automatisé et remontée sécurisée des données terrain.</li>
+                <li>Anonymat et protection renforcée des répondants citoyens.</li>
             `;
 
             document.getElementById('swot-menaces').innerHTML = `
-                <li>Inaction face aux préjudices financiers subis par les usagers (${totalPertes.toLocaleString('fr-FR')} Ar).</li>
-                <li>Risque de banalisation des pratiques informelles (${corruptionCases} cas signalés).</li>
+                <li>Risque de persistance des surcoûts subis par les citoyens (${totalPertesFormatted}).</li>
+                <li>Pression d'irrégularités/corruption identifiée dans ${corruptionRate} des cas.</li>
             `;
+
+            // Remplissage Fiche SMART
+            document.getElementById('smart-pertes-val').innerText = totalPertesFormatted;
+            document.getElementById('smart-audit-val').innerText = auditCount;
+            document.getElementById('smart-concertation-val').innerText = concertationCount;
+            document.getElementById('smart-corruption-val').innerText = corruptionRate;
 
         } catch (err) {
             console.error("Erreur de chargement des données :", err);
         }
     }
 
-    // Chargement initial au démarrage
     loadDashboardData();
 </script>
 
