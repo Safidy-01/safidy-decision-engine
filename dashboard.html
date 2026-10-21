@@ -3,49 +3,63 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Safidy - Moteur Décisionnel & Dashboard SWOT</title>
+    <title>Safidy - Decision Engine & Dashboard Analytique</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Integration de Chart.js pour les graphiques -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f0f4f8; color: #102a43; }
-        .container { max-width: 1000px; margin: auto; background: white; padding: 25px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        nav { display: flex; gap: 10px; margin-bottom: 25px; border-bottom: 2px solid #e4e7eb; padding-bottom: 12px; }
-        nav a { text-decoration: none; padding: 8px 16px; border-radius: 5px; font-weight: bold; font-size: 0.9rem; }
-        nav a.active { background-color: #0b69a3; color: white; }
-        nav a.inactive { background-color: #e4e7eb; color: #486581; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 20px; background-color: #f0f4f8; color: #102a43; }
+        .container { max-width: 1100px; margin: auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
         
-        h1 { color: #0b69a3; text-align: center; margin-bottom: 5px; }
-        p.subtitle { text-align: center; color: #627d98; margin-bottom: 25px; }
+        /* Navigation principale */
+        nav.main-nav { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid #e4e7eb; padding-bottom: 12px; }
+        nav.main-nav a { text-decoration: none; padding: 8px 16px; border-radius: 6px; font-weight: bold; font-size: 0.9rem; }
+        nav.main-nav a.active { background-color: #0b69a3; color: white; }
+        nav.main-nav a.inactive { background-color: #e4e7eb; color: #486581; }
 
-        /* Style des KPI Cards */
-        .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 30px; }
-        .kpi-card { background: #f8fafc; border: 1px solid #d9e2ec; border-left: 5px solid #0b69a3; padding: 15px; border-radius: 6px; }
-        .kpi-card h3 { margin: 0; font-size: 0.85rem; color: #486581; text-transform: uppercase; }
-        .kpi-card .value { font-size: 1.6rem; font-weight: bold; color: #102a43; margin-top: 8px; }
+        /* Onglets du Dashboard */
+        .tab-menu { display: flex; gap: 8px; border-bottom: 2px solid #cbd5e1; margin-bottom: 25px; overflow-x: auto; }
+        .tab-btn { background: #f1f5f9; border: none; padding: 12px 20px; font-weight: bold; color: #475569; border-radius: 8px 8px 0 0; cursor: pointer; transition: all 0.2s; }
+        .tab-btn.active { background: #0b69a3; color: white; border-bottom: 3px solid #0284c7; }
+        
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        /* KPI Cards */
+        .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; margin-bottom: 25px; }
+        .kpi-card { background: #f8fafc; border: 1px solid #cbd5e1; border-left: 5px solid #0b69a3; padding: 15px; border-radius: 8px; }
+        .kpi-card h3 { margin: 0; font-size: 0.85rem; color: #64748b; text-transform: uppercase; }
+        .kpi-card .value { font-size: 1.7rem; font-weight: bold; color: #0f172a; margin-top: 8px; }
+
+        /* Conteneurs de Graphiques */
+        .charts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 20px; margin-top: 20px; }
+        .chart-card { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 18px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+        .chart-card h3 { margin-top: 0; color: #1e293b; font-size: 1rem; border-bottom: 1px solid #f1f5f9; padding-bottom: 10px; }
 
         /* Matrice SWOT Grid */
-        .swot-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px; margin-bottom: 35px; }
+        .swot-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px; margin-bottom: 30px; }
         .swot-box { padding: 20px; border-radius: 8px; min-height: 180px; }
-        .swot-box h2 { margin-top: 0; font-size: 1.2rem; border-bottom: 2px solid rgba(0,0,0,0.1); padding-bottom: 8px; }
-        
-        .forces { background-color: #e6fffa; border: 1px solid #b2f5ea; color: #234e52; }
-        .faiblesses { background-color: #fff5f5; border: 1px solid #fed7d7; color: #742a2a; }
-        .opportunites { background-color: #ebf8ff; border: 1px solid #bee3f8; color: #2c5282; }
-        .menaces { background-color: #fffaf0; border: 1px solid #feebc8; color: #7b341e; }
-
+        .swot-box h2 { margin-top: 0; font-size: 1.1rem; border-bottom: 2px solid rgba(0,0,0,0.1); padding-bottom: 8px; }
+        .forces { background-color: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; }
+        .faiblesses { background-color: #fef2f2; border: 1px solid #fecaca; color: #991b1b; }
+        .opportunites { background-color: #f0f9ff; border: 1px solid #bae6fd; color: #075985; }
+        .menaces { background-color: #fffbeb; border: 1px solid #fef3c7; color: #92400e; }
         ul.swot-list { padding-left: 20px; margin-top: 10px; font-size: 0.95rem; line-height: 1.5; }
-        
-        /* Section Module SMART */
-        .smart-section { background: #f0f4f8; border: 2px solid #0b69a3; padding: 20px; border-radius: 8px; margin-top: 20px; }
-        .smart-section h2 { color: #0b69a3; margin-top: 0; }
-        .smart-card { background: white; padding: 15px; border-radius: 6px; margin-top: 15px; border-left: 4px solid #10b981; }
-        .smart-card h4 { margin: 0 0 5px 0; color: #047857; }
-        .btn-export { background-color: #0b69a3; color: white; border: none; padding: 10px 18px; border-radius: 5px; font-weight: bold; cursor: pointer; margin-top: 15px; }
-        .btn-export:hover { background-color: #084c77; }
 
-        #auth-status { text-align: right; font-size: 0.85rem; color: #627d98; margin-bottom: 10px; }
+        /* Module SMART */
+        .smart-section { background: #f8fafc; border: 2px solid #0b69a3; padding: 20px; border-radius: 8px; margin-top: 20px; }
+        .smart-card { background: white; padding: 15px; border-radius: 6px; margin-top: 15px; border-left: 4px solid #10b981; }
+        .btn-export { background-color: #0b69a3; color: white; border: none; padding: 10px 18px; border-radius: 5px; font-weight: bold; cursor: pointer; margin-top: 15px; }
+
+        /* Style Tableau Preuves */
+        table.evidence-table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        table.evidence-table th, table.evidence-table td { border: 1px solid #e2e8f0; padding: 10px; text-align: left; font-size: 0.9rem; }
+        table.evidence-table th { background-color: #f1f5f9; color: #334155; }
         
+        #auth-status { text-align: right; font-size: 0.85rem; color: #64748b; margin-bottom: 10px; }
+
         @media print {
-            nav, #auth-status, .btn-export { display: none; }
+            nav, .tab-menu, #auth-status, .btn-export { display: none; }
             body { background: white; margin: 0; }
             .container { box-shadow: none; max-width: 100%; }
         }
@@ -54,80 +68,140 @@
 <body>
 
 <div class="container">
-    <nav>
-        <a href="index.html" class="inactive">🏛️ Concertations</a>
-        <a href="audit.html" class="inactive">📢 Audit Citoyen</a>
-        <a href="dashboard.html" class="active">📊 Decision Engine (SWOT)</a>
+    <nav class="main-nav">
+        <a href="index.html" class="inactive">🏛️ Formulaire Concertations</a>
+        <a href="audit.html" class="inactive">📢 Formulaire Audit Citoyen</a>
+        <a href="dashboard.html" class="active">📊 Decision Engine (Dashboard)</a>
     </nav>
 
-    <div id="auth-status">Statut : 🟢 Connexion sécurisée active</div>
+    <div id="auth-status">Statut : 🟢 Connexion BDD active</div>
 
-    <h1>📊 Matrice Decision Engine (SWOT / TOWS)</h1>
-    <p class="subtitle">Analyse consolidée des données citoyennes & Fiches d'Action SMART</p>
+    <h1 style="color:#0b69a3; text-align:center; margin-bottom:5px;">📊 Safidy Decision Engine</h1>
+    <p style="text-align:center; color:#64748b; margin-bottom:20px;">Plateforme Analytique & Moteur Décisionnel de Plaidoyer</p>
 
-    <!-- Section Indicateurs Clés -->
-    <div class="kpi-grid">
-        <div class="kpi-card">
-            <h3>Signalements Audit</h3>
-            <div class="value" id="kpi-audit-count">--</div>
+    <!-- Menu des Onglets -->
+    <div class="tab-menu">
+        <button class="tab-btn active" onclick="switchTab('tab-audit')">📢 Volet 1: Audit & Anti-Corruption</button>
+        <button class="tab-btn" onclick="switchTab('tab-concertations')">🏛️ Volet 2: Concertations & Ateliers</button>
+        <button class="tab-btn" onclick="switchTab('tab-preuves')">📁 Volet 3: Coffre-fort des Preuves</button>
+        <button class="tab-btn" onclick="switchTab('tab-swot')">🎯 Volet 4: Vue Consolidée SWOT / SMART</button>
+    </div>
+
+    <!-- ================= VOLET 1 : AUDIT CITOYEN & ANTI-CORRUPTION ================= -->
+    <div id="tab-audit" class="tab-content active">
+        <h2>📢 Volet 1 : Résultats des Campagnes d'Audit Citoyen</h2>
+        <div class="kpi-grid">
+            <div class="kpi-card">
+                <h3>Signalements Totaux</h3>
+                <div class="value" id="audit-kpi-count">0</div>
+            </div>
+            <div class="kpi-card">
+                <h3>Préjudice Financier Total</h3>
+                <div class="value" id="audit-kpi-pertes">0 Ar</div>
+            </div>
+            <div class="kpi-card">
+                <h3>Taux de Corruption Signalé</h3>
+                <div class="value" id="audit-kpi-corruption">0%</div>
+            </div>
         </div>
-        <div class="kpi-card">
-            <h3>Concertations Récoltées</h3>
-            <div class="value" id="kpi-concertations-count">--</div>
-        </div>
-        <div class="kpi-card">
-            <h3>Pertes Financières (Ar)</h3>
-            <div class="value" id="kpi-pertes-total">--</div>
-        </div>
-        <div class="kpi-card">
-            <h3>Pression Corruption</h3>
-            <div class="value" id="kpi-corruption-rate">--</div>
+
+        <!-- Graphiques Volet 1 -->
+        <div class="charts-grid">
+            <div class="chart-card">
+                <h3>Pression de Corruption Signalée</h3>
+                <canvas id="chartCorruption"></canvas>
+            </div>
+            <div class="chart-card">
+                <h3>Répartition des Délais de Traitement Constatés</h3>
+                <canvas id="chartDelais"></canvas>
+            </div>
         </div>
     </div>
 
-    <!-- Section Matrice SWOT -->
-    <div class="swot-grid">
-        <div class="swot-box forces">
-            <h2>💪 Forces (Strengths)</h2>
-            <ul class="swot-list" id="swot-forces">
-                <li>Chargement des données en cours...</li>
-            </ul>
+    <!-- ================= VOLET 2 : CONCERTATIONS & ATELIERS ================= -->
+    <div id="tab-concertations" class="tab-content">
+        <h2>🏛️ Volet 2 : Collecte des Concertations, Colloques & Ateliers</h2>
+        <div class="kpi-grid">
+            <div class="kpi-card">
+                <h3>Rapports Récoltés</h3>
+                <div class="value" id="concert-kpi-count">0</div>
+            </div>
+            <div class="kpi-card">
+                <h3>Propositions Citoyennes</h3>
+                <div class="value" id="concert-kpi-props">0</div>
+            </div>
         </div>
-        <div class="swot-box faiblesses">
-            <h2>⚠️ Faiblesses (Weaknesses)</h2>
-            <ul class="swot-list" id="swot-faiblesses">
-                <li>Chargement des données en cours...</li>
-            </ul>
-        </div>
-        <div class="swot-box opportunites">
-            <h2>🚀 Opportunités (Opportunities)</h2>
-            <ul class="swot-list" id="swot-opportunites">
-                <li>Chargement des données en cours...</li>
-            </ul>
-        </div>
-        <div class="swot-box menaces">
-            <h2>🛡️ Menaces (Threats)</h2>
-            <ul class="swot-list" id="swot-menaces">
-                <li>Chargement des données en cours...</li>
-            </ul>
+
+        <!-- Graphiques Volet 2 -->
+        <div class="charts-grid">
+            <div class="chart-card">
+                <h3>Volume de Remontées par Atelier / Source</h3>
+                <canvas id="chartConcertations"></canvas>
+            </div>
         </div>
     </div>
 
-    <!-- Section Moteur de Fiches d'Action SMART -->
-    <div class="smart-section">
-        <h2>🎯 Générateur de Fiche d'Action SMART</h2>
-        <p>Génération automatique d'objectifs de plaidoyer fondés sur les preuves factuelles agrégées :</p>
+    <!-- ================= VOLET 3 : COFFRE-FORT DES PREUVES ================= -->
+    <div id="tab-preuves" class="tab-content">
+        <h2>📁 Volet 3 : Coffre-fort des Pièces Jointes & Preuves (Supabase Storage)</h2>
+        <p>Répertoire des justificatifs déposés par les citoyens et participants (Scans, Factures, Reçus, Documents PDF/Word/Excel) :</p>
         
-        <div id="smart-output" class="smart-card">
-            <h4>Plaidoyer Prioritaire #1 : Réduction des Surcoûts et Tracasseries Administratives</h4>
-            <p><strong>Specific (Spécifique) :</strong> Cibler la simplification des démarches administratives ayant engendré le plus de signalements d'irrégularités et de coûts informels.</p>
-            <p><strong>Measurable (Mesurable) :</strong> Visibilité directe sur un préjudice financier citoyen cumulé identifié à <span id="smart-pertes-val">--</span> Ar sur <span id="smart-audit-val">--</span> dossiers d'audit.</p>
-            <p><strong>Achievable (Atteignable) :</strong> S'appuyer sur les <span id="smart-concertation-val">--</span> propositions issues des concertations citoyennes pour soumettre une feuille de route de réforme au Ministère/Institution concerné.</p>
-            <p><strong>Relevant (Pertinent) :</strong> Réduire la pression de la corruption mesurée à un taux de <span id="smart-corruption-val">--</span> dans les signalements reçus.</p>
-            <p><strong>Time-bound (Temporel) :</strong> Présenter le rapport officiel de plaidoyer de Safidy Ifanomezantsoa d'ici la fin du trimestre en cours.</p>
+        <table class="evidence-table">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Source / Module</th>
+                    <th>Description / Tracasserie</th>
+                    <th>Type de Fichier</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody id="evidence-table-body">
+                <tr>
+                    <td colspan="5" style="text-align:center; color:#64748b;">Chargement des pièces justificatives en cours...</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- ================= VOLET 4 : VUE CONSOLIDÉE SWOT & SMART ================= -->
+    <div id="tab-swot" class="tab-content">
+        <h2>🎯 Volet 4 : Vue Consolidée Strategique (SWOT / TOWS & Action SMART)</h2>
+        <p>Réservé à l'équipe décisionnelle pour croiser les Faiblesses (Audits) et Opportunités (Ateliers) :</p>
+
+        <!-- Matrice SWOT Grid -->
+        <div class="swot-grid">
+            <div class="swot-box forces">
+                <h2>💪 Forces (Strengths)</h2>
+                <ul class="swot-list" id="swot-forces"><li>Chargement...</li></ul>
+            </div>
+            <div class="swot-box faiblesses">
+                <h2>⚠️ Faiblesses (Weaknesses)</h2>
+                <ul class="swot-list" id="swot-faiblesses"><li>Chargement...</li></ul>
+            </div>
+            <div class="swot-box opportunites">
+                <h2>🚀 Opportunités (Opportunities)</h2>
+                <ul class="swot-list" id="swot-opportunites"><li>Chargement...</li></ul>
+            </div>
+            <div class="swot-box menaces">
+                <h2>🛡️ Menaces (Threats)</h2>
+                <ul class="swot-list" id="swot-menaces"><li>Chargement...</li></ul>
+            </div>
         </div>
 
-        <button onclick="window.print()" class="btn-export">🖨️ Imprimer / Exporter la Fiche de Plaidoyer (PDF)</button>
+        <!-- Module Fiche SMART -->
+        <div class="smart-section">
+            <h2>🎯 Générateur de Fiche d'Action SMART</h2>
+            <div class="smart-card">
+                <h3 style="margin-top:0; color:#047857;">Plaidoyer Prioritaire : Réforme Administrative & Anti-Corruption</h3>
+                <p><strong>S (Spécifique) :</strong> Structurer un plaidoyer ciblé sur les dysfonctionnements prioritaires identifiés par l'audit citoyen.</p>
+                <p><strong>M (Mesurable) :</strong> Appuyé sur un préjudice financier cumulé mesuré à <span id="smart-pertes-val">0</span> Ar sur <span id="smart-audit-val">0</span> dossiers d'audit.</p>
+                <p><strong>A (Atteignable) :</strong> Alimenté par <span id="smart-concertation-val">0</span> propositions directes d'ateliers et concertations.</p>
+                <p><strong>R (Réaliste) :</strong> Réduction ciblée de la pression de corruption estimée à <span id="smart-corruption-val">0%</span>.</p>
+                <p><strong>T (Temporel) :</strong> Présentation officielle de la fiche de réforme au cours du trimestre en cours.</p>
+            </div>
+            <button onclick="window.print()" class="btn-export">🖨️ Imprimer la Fiche de Plaidoyer SMART (PDF)</button>
+        </div>
     </div>
 </div>
 
@@ -137,76 +211,135 @@
     const SUPABASE_KEY = 'sb_publishable_OyEsfDZaWZwhe0pkPkqtWQ_TPtbQ5iR';
     const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+    // Fonction de gestion des Onglets
+    function switchTab(tabId) {
+        document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+        
+        document.getElementById(tabId).classList.add('active');
+        event.currentTarget.classList.add('active');
+    }
+
     async function loadDashboardData() {
         try {
-            // Fetch Audit Citoyen Data
-            const { data: auditData, error: auditError } = await _supabase
-                .from('audit_citoyen_signalements')
-                .select('*');
+            // Requête BDD Audit
+            const { data: auditData } = await _supabase.from('audit_citoyen_signalements').select('*');
+            // Requête BDD Concertations
+            const { data: concertationData } = await _supabase.from('rapports_concertation').select('*');
 
-            // Fetch Concertations Data
-            const { data: concertationData, error: concertationError } = await _supabase
-                .from('rapports_concertation')
-                .select('*');
-
-            if (auditError) console.error("Erreur Audit:", auditError);
-            if (concertationError) console.error("Erreur Concertations:", concertationError);
-
-            // Calculs KPI
             const auditCount = auditData ? auditData.length : 0;
             const concertationCount = concertationData ? concertationData.length : 0;
-            
+
             let totalPertes = 0;
             let corruptionCases = 0;
+            let noCorruptionCases = 0;
 
             if (auditData) {
                 auditData.forEach(row => {
                     totalPertes += (row.perte_financiere || 0) + (row.cout_transport || 0) + (row.montant_informel || 0);
                     if (row.pression_corruption && row.pression_corruption !== 'Non') {
                         corruptionCases++;
+                    } else {
+                        noCorruptionCases++;
                     }
                 });
             }
 
-            const corruptionRate = auditCount > 0 ? Math.round((corruptionCases / auditCount) * 100) + "%" : "0%";
-            const totalPertesFormatted = totalPertes.toLocaleString('fr-FR') + " Ar";
+            const corruptionRate = auditCount > 0 ? Math.round((corruptionCases / auditCount) * 100) : 0;
+            const pertesFormatted = totalPertes.toLocaleString('fr-FR') + " Ar";
 
-            // Mise à jour KPI
-            document.getElementById('kpi-audit-count').innerText = auditCount;
-            document.getElementById('kpi-concertations-count').innerText = concertationCount;
-            document.getElementById('kpi-pertes-total').innerText = totalPertesFormatted;
-            document.getElementById('kpi-corruption-rate').innerText = corruptionRate;
+            // Mise a jour KPI Volet 1
+            document.getElementById('audit-kpi-count').innerText = auditCount;
+            document.getElementById('audit-kpi-pertes').innerText = pertesFormatted;
+            document.getElementById('audit-kpi-corruption').innerText = corruptionRate + "%";
 
-            // Remplissage SWOT
+            // Mise a jour KPI Volet 2
+            document.getElementById('concert-kpi-count').innerText = concertationCount;
+            document.getElementById('concert-kpi-props').innerText = concertationCount;
+
+            // Remplissage SWOT (Volet 4)
             document.getElementById('swot-faiblesses').innerHTML = `
-                <li><strong>Dysfonctionnements documentés :</strong> ${auditCount} dossier(s) d'audit enregistrés.</li>
-                <li><strong>Impact financier usagers :</strong> ${totalPertesFormatted} de pertes cumulées.</li>
+                <li><strong>Tracas administratifs documentés :</strong> ${auditCount} cas d'audit répertoriés.</li>
+                <li><strong>Impact financier :</strong> ${pertesFormatted} de surcoûts subis.</li>
             `;
-
             document.getElementById('swot-opportunites').innerHTML = `
-                <li><strong>Propositions citoyennes :</strong> ${concertationCount} rapport(s) d'orientation récolté(s).</li>
-                <li>Base factuelle solide pour l'élaboration de réformes ciblées.</li>
+                <li><strong>Remontées citoyennes :</strong> ${concertationCount} rapport(s) d'ateliers et concertations.</li>
+                <li>Propositions concrètes prêtes pour le travail de plaidoyer.</li>
             `;
-
             document.getElementById('swot-forces').innerHTML = `
-                <li>Système décisionnel automatisé et remontée sécurisée des données terrain.</li>
-                <li>Anonymat et protection renforcée des répondants citoyens.</li>
+                <li>Collecte autonome et sécurisée en temps réel.</li>
+                <li>Anonymat préservé des répondants.</li>
             `;
-
             document.getElementById('swot-menaces').innerHTML = `
-                <li>Risque de persistance des surcoûts subis par les citoyens (${totalPertesFormatted}).</li>
-                <li>Pression d'irrégularités/corruption identifiée dans ${corruptionRate} des cas.</li>
+                <li>Persistance de la pression de corruption (présente dans ${corruptionRate}% des signalements).</li>
             `;
 
-            // Remplissage Fiche SMART
-            document.getElementById('smart-pertes-val').innerText = totalPertesFormatted;
+            // Remplissage SMART
+            document.getElementById('smart-pertes-val').innerText = pertesFormatted;
             document.getElementById('smart-audit-val').innerText = auditCount;
             document.getElementById('smart-concertation-val').innerText = concertationCount;
-            document.getElementById('smart-corruption-val').innerText = corruptionRate;
+            document.getElementById('smart-corruption-val').innerText = corruptionRate + "%";
+
+            // Remplissage Tableau des Preuves (Volet 3)
+            let evidenceHTML = '';
+            if (auditData && auditData.length > 0) {
+                auditData.forEach(row => {
+                    if (row.piece_jointe_url) {
+                        evidenceHTML += `
+                            <tr>
+                                <td>${new Date(row.created_at || Date.now()).toLocaleDateString('fr-FR')}</td>
+                                <td>📢 Audit Citoyen</td>
+                                <td>${row.description_tracasserie || 'Non spécifié'}</td>
+                                <td>📄 Pièce Jointe</td>
+                                <td><a href="${row.piece_jointe_url}" target="_blank" style="color:#0b69a3; font-weight:bold;">👁️ Voir le document</a></td>
+                            </tr>
+                        `;
+                    }
+                });
+            }
+            
+            if (!evidenceHTML) {
+                evidenceHTML = `<tr><td colspan="5" style="text-align:center; color:#64748b;">Aucune pièce jointe transmise pour le moment.</td></tr>`;
+            }
+            document.getElementById('evidence-table-body').innerHTML = evidenceHTML;
+
+            // Initialisation des Graphiques
+            renderCharts(corruptionCases, noCorruptionCases, auditCount, concertationCount);
 
         } catch (err) {
-            console.error("Erreur de chargement des données :", err);
+            console.error("Erreur de chargement BDD :", err);
         }
+    }
+
+    function renderCharts(corruptionCount, cleanCount, totalAudit, totalConcert) {
+        // Chart 1 : Camembert Corruption
+        const ctxCorr = document.getElementById('chartCorruption').getContext('2d');
+        new Chart(ctxCorr, {
+            type: 'doughnut',
+            data: {
+                labels: ['Pression Corruption Signalée', 'Aucune Corruption Signalée'],
+                datasets: [{
+                    data: [corruptionCount, cleanCount],
+                    backgroundColor: ['#ef4444', '#10b981']
+                }]
+            },
+            options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+        });
+
+        // Chart 2 : Histogramme Comparatif (Audit vs Concertations)
+        const ctxConcert = document.getElementById('chartConcertations').getContext('2d');
+        new Chart(ctxConcert, {
+            type: 'bar',
+            data: {
+                labels: ['Audits Citoyens (Lutte Corruption)', 'Concertations & Ateliers (Idées)'],
+                datasets: [{
+                    label: 'Nombre de participations',
+                    data: [totalAudit, totalConcert],
+                    backgroundColor: ['#0b69a3', '#0284c7']
+                }]
+            },
+            options: { responsive: true, scales: { y: { beginAtZero: true } } }
+        });
     }
 
     loadDashboardData();
