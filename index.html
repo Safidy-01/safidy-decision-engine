@@ -3,124 +3,116 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Safidy Decision Engine</title>
+    <title>Safidy Decision Engine - Ingestion Concertations & Ateliers</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        body { font-family: Arial, sans-serif; background-color: #f4f7f6; margin: 0; padding: 15px; color: #333; }
-        .container { max-width: 600px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        h1 { color: #0077b6; font-size: 22px; text-align: center; }
-        .section { margin-bottom: 25px; padding-bottom: 15px; border-bottom: 1px solid #eee; }
-        label { display: block; margin-top: 10px; font-weight: bold; font-size: 14px; }
-        input, textarea, select { width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
-        button { background-color: #0077b6; color: white; border: none; padding: 12px; width: 100%; border-radius: 5px; font-size: 16px; margin-top: 15px; cursor: pointer; }
-        button:hover { background-color: #023e8a; }
-        #status-msg { margin-top: 15px; padding: 10px; text-align: center; border-radius: 5px; font-weight: bold; }
-        .success { background-color: #d4edda; color: #155724; }
-        .error { background-color: #f8d7da; color: #721c24; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 20px; background-color: #f0f4f8; color: #102a43; }
+        .container { max-width: 700px; margin: auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); }
+        nav { display: flex; gap: 10px; margin-bottom: 25px; border-bottom: 2px solid #cbd5e1; padding-bottom: 12px; }
+        nav a { text-decoration: none; padding: 8px 16px; border-radius: 6px; font-weight: bold; font-size: 0.9rem; }
+        nav a.active { background-color: #0b69a3; color: white; }
+        nav a.inactive { background-color: #e2e8f0; color: #475569; }
+        
+        h1 { color: #0b69a3; text-align: center; margin-bottom: 5px; }
+        p.subtitle { text-align: center; color: #64748b; margin-bottom: 25px; font-size: 0.95rem; }
+
+        .form-group { margin-bottom: 18px; }
+        label { display: block; font-weight: bold; margin-bottom: 6px; color: #1e293b; font-size: 0.9rem; }
+        input[type="text"], input[type="date"], textarea, select { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; font-size: 0.95rem; }
+        textarea { resize: vertical; min-height: 90px; }
+        
+        .file-upload-box { border: 2px dashed #0b69a3; background-color: #f0f9ff; padding: 20px; text-align: center; border-radius: 8px; margin-top: 10px; }
+        .file-upload-box input[type="file"] { margin-top: 10px; }
+
+        button.btn-submit { background-color: #0b69a3; color: white; border: none; padding: 12px 20px; width: 100%; border-radius: 6px; font-size: 1rem; font-weight: bold; cursor: pointer; transition: background 0.2s; margin-top: 15px; }
+        button.btn-submit:hover { background-color: #084c77; }
+
+        .status-msg { margin-top: 15px; padding: 12px; border-radius: 6px; font-weight: bold; display: none; }
+        .status-success { background-color: #dcfce7; color: #15803d; border: 1px solid #86efac; }
+        .status-error { background-color: #fee2e2; color: #b91c1c; border: 1px solid #fca5a5; }
     </style>
 </head>
 <body>
 
 <div class="container">
+    <nav>
+        <a href="index.html" class="active">🏛️ Ingestion Ateliers</a>
+        <a href="audit.html" class="inactive">📢 Audit Citoyen</a>
+        <a href="dashboard.html" class="inactive">📊 Moteur Décisionnel</a>
+    </nav>
+
     <h1>🏛️ Safidy Decision Engine</h1>
-    <p style="text-align: center; font-size: 13px; color: #666;">Ingestion de concertations et Audit Citoyen</p>
+    <p class="subtitle">Collecte & Ingestion des Résolutions d'Ateliers, Colloques et Concertations</p>
 
-    <!-- FORMULAIRE RAPPORT DE CONCERTATION -->
-    <div class="section">
-        <h3>1. Enregistrer une Concertation</h3>
-        <label>Titre de la concertation</label>
-        <input type="text" id="titre-concertation" placeholder="Ex: Atelier Régional Analamanga">
+    <form id="concertationForm">
+        <div class="form-group">
+            <label for="titre_concertation">Titre de l'Atelier / Colloque / Concertation *</label>
+            <input type="text" id="titre_concertation" required placeholder="Ex: Atelier Régional sur la Transparence Budgétaire">
+        </div>
 
-        <label>Organisation Source</label>
-        <input type="text" id="org-source" placeholder="Ex: Association Safidy">
+        <div class="form-group">
+            <label for="organisation_source">Entité / Organisation Organisatrice *</label>
+            <input type="text" id="organisation_source" required placeholder="Ex: Association Safidy, Coalition Civique...">
+        </div>
 
-        <label>Résumé Global</label>
-        <textarea id="resume-concertation" rows="3" placeholder="Points clés de la concertation..."></textarea>
-        
-        <button onclick="enregistrerConcertation()">Enregistrer la Concertation</button>
-    </div>
+        <div class="form-group">
+            <label for="date_evenement">Date de l'événement *</label>
+            <input type="date" id="date_evenement" required>
+        </div>
 
-    <!-- FORMULAIRE AUDIT CITOYEN -->
-    <div class="section">
-        <h3>2. Signalement Audit Citoyen</h3>
-        <label>Titre du signalement</label>
-        <input type="text" id="titre-signalement" placeholder="Ex: Problème d'infrastructure locale">
+        <div class="form-group">
+            <label for="parties_prenantes">Parties Prenantes Représentées</label>
+            <input type="text" id="parties_prenantes" placeholder="Ex: Parti TIM, Société Civile, Groupements de Jeunes, Syndicats...">
+        </div>
 
-        <label>Description / Détails</label>
-        <textarea id="desc-signalement" rows="3" placeholder="Décrivez le problème constaté..."></textarea>
+        <div class="form-group">
+            <label for="resume_global">Résumé des Résolutions / Idées Clés (Optionnel)</label>
+            <textarea id="resume_global" placeholder="Synthetisez brièvement les propositions phares issues des échanges..."></textarea>
+        </div>
 
-        <label>Localisation</label>
-        <input type="text" id="localisation" placeholder="Ex: Antananarivo - Enceinte ...">
+        <!-- Zone d'Upload Direct de Documents -->
+        <div class="form-group">
+            <label>📄 Documents / Pièces Jointes à Soumettre (PDF, Word, Excel, Scans)</label>
+            <div class="file-upload-box">
+                <p style="margin:0; color:#475569; font-size:0.9rem;">Sélectionnez vos fichiers directement depuis votre téléphone ou ordinateur :</p>
+                <input type="file" id="document_file" accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg">
+            </div>
+        </div>
 
-        <button onclick="enregistrerSignalement()">Envoyer le Signalement</button>
-    </div>
+        <button type="submit" class="btn-submit" id="submitBtn">📥 Enregistrer dans Safidy Decision Engine</button>
+    </form>
 
-    <div id="status-msg"></div>
+    <div id="statusMessage" class="status-msg"></div>
 </div>
 
 <script>
-    // Configuration Supabase (À configurer avec vos propres identifiants récupérés)
+    // Configuration Supabase
     const SUPABASE_URL = 'https://tunanbanizxowofzkjql.supabase.co';
-    const SUPABASE_ANON_KEY = 'sb_publishable_OyEsfDZaWZwhe0pkPkqtWQ_TPtbQ5iR';
-    
-    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const SUPABASE_KEY = 'sb_publishable_OyEsfDZaWZwhe0pkPkqtWQ_TPtbQ5iR';
+    const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    async function enregistrerConcertation() {
-        const titre = document.getElementById('titre-concertation').value;
-        const organisation = document.getElementById('org-source').value;
-        const resume = document.getElementById('resume-concertation').value;
-        const msg = document.getElementById('status-msg');
+    document.getElementById('concertationForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const submitBtn = document.getElementById('submitBtn');
+        const statusMsg = document.getElementById('statusMessage');
+        
+        submitBtn.disabled = true;
+        submitBtn.innerText = "⏳ Enregistrement et transfert du fichier en cours...";
+        statusMsg.style.display = "none";
 
-        if(!titre || !organisation) {
-            showMsg("Veuillez remplir au moins le titre et l'organisation.", "error");
-            return;
-        }
+        try {
+            const titre = document.getElementById('titre_concertation').value;
+            const organisation = document.getElementById('organisation_source').value;
+            const dateEvt = document.getElementById('date_evenement').value;
+            const parties = document.getElementById('parties_prenantes').value;
+            const resume = document.getElementById('resume_global').value;
+            const fileInput = document.getElementById('document_file');
 
-        const { data, error } = await supabaseClient
-            .from('rapports_concertation')
-            .insert([{ titre: titre, organisation_source: organisation, resume_global: resume }]);
+            let fileUrl = null;
 
-        if (error) {
-            showMsg("Erreur : " + error.message, "error");
-        } else {
-            showMsg("Concertation enregistrée avec succès dans Supabase !", "success");
-            document.getElementById('titre-concertation').value = '';
-            document.getElementById('org-source').value = '';
-            document.getElementById('resume-concertation').value = '';
-        }
-    }
-
-    async function enregistrerSignalement() {
-        const titre = document.getElementById('titre-signalement').value;
-        const description = document.getElementById('desc-signalement').value;
-        const localisation = document.getElementById('localisation').value;
-        const msg = document.getElementById('status-msg');
-
-        if(!titre) {
-            showMsg("Veuillez renseigner le titre du signalement.", "error");
-            return;
-        }
-
-        const { data, error } = await supabaseClient
-            .from('audit_citoyen_signalements')
-            .insert([{ titre_signalement: titre, description: description, localisation: localisation }]);
-
-        if (error) {
-            showMsg("Erreur : " + error.message, "error");
-        } else {
-            showMsg("Signalement d'audit citoyen enregistré avec succès !", "success");
-            document.getElementById('titre-signalement').value = '';
-            document.getElementById('desc-signalement').value = '';
-            document.getElementById('localisation').value = '';
-        }
-    }
-
-    function showMsg(text, type) {
-        const msg = document.getElementById('status-msg');
-        msg.innerText = text;
-        msg.className = type;
-    }
-</script>
-
-</body>
-</html>
+            // 1. Upload du fichier dans Supabase Storage si un fichier est choisi
+            if (fileInput.files.length > 0) {
+                const file = fileInput.files[0];
+                const fileExt = file.name.split('.').pop();
+                const fileName
