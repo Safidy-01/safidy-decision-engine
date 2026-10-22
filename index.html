@@ -17,6 +17,9 @@
         p.subtitle { text-align: center; color: #64748b; margin-bottom: 25px; font-size: 0.95rem; }
 
         .form-group { margin-bottom: 18px; }
+        .date-row { display: flex; gap: 15px; }
+        .date-row .form-group { flex: 1; }
+
         label { display: block; font-weight: bold; margin-bottom: 6px; color: #1e293b; font-size: 0.9rem; }
         input[type="text"], input[type="date"], textarea, select { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; font-size: 0.95rem; }
         textarea { resize: vertical; min-height: 90px; }
@@ -55,9 +58,16 @@
             <input type="text" id="organisation_source" required placeholder="Ex: Association Safidy, Coalition Civique...">
         </div>
 
-        <div class="form-group">
-            <label for="date_evenement">Date de l'événement *</label>
-            <input type="date" id="date_evenement" required>
+        <!-- Dates de début et de fin pour les événements multi-jours -->
+        <div class="date-row">
+            <div class="form-group">
+                <label for="date_debut">Date de début *</label>
+                <input type="date" id="date_debut" required>
+            </div>
+            <div class="form-group">
+                <label for="date_fin">Date de fin (Optionnel)</label>
+                <input type="date" id="date_fin">
+            </div>
         </div>
 
         <div class="form-group">
@@ -67,14 +77,14 @@
 
         <div class="form-group">
             <label for="resume_global">Résumé des Résolutions / Idées Clés (Optionnel)</label>
-            <textarea id="resume_global" placeholder="Synthetisez brièvement les propositions phares issues des échanges..."></textarea>
+            <textarea id="resume_global" placeholder="Synthétisez brièvement les propositions phares issues des échanges..."></textarea>
         </div>
 
         <!-- Zone d'Upload Direct de Documents -->
         <div class="form-group">
             <label>📄 Documents / Pièces Jointes à Soumettre (PDF, Word, Excel, Scans)</label>
             <div class="file-upload-box">
-                <p style="margin:0; color:#475569; font-size:0.9rem;">Sélectionnez vos fichiers directement depuis votre téléphone ou ordinateur :</p>
+                <p style="margin:0; color:#475569; font-size:0.9rem;">Sélectionnez vos fichiers directement depuis votre appareil :</p>
                 <input type="file" id="document_file" accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg">
             </div>
         </div>
@@ -104,7 +114,8 @@
         try {
             const titre = document.getElementById('titre_concertation').value;
             const organisation = document.getElementById('organisation_source').value;
-            const dateEvt = document.getElementById('date_evenement').value;
+            const dateDebut = document.getElementById('date_debut').value;
+            const dateFin = document.getElementById('date_fin').value || dateDebut;
             const parties = document.getElementById('parties_prenantes').value;
             const resume = document.getElementById('resume_global').value;
             const fileInput = document.getElementById('document_file');
@@ -115,4 +126,51 @@
             if (fileInput.files.length > 0) {
                 const file = fileInput.files[0];
                 const fileExt = file.name.split('.').pop();
-                const fileName
+                const fileName = `concertations/${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+
+                const { data: storageData, error: storageError } = await _supabase.storage
+                    .from('documents_preuves')
+                    .upload(fileName, file);
+
+                if (!storageError) {
+                    const { data: publicUrlData } = _supabase.storage
+                        .from('documents_preuves')
+                        .getPublicUrl(fileName);
+                    fileUrl = publicUrlData.publicUrl;
+                }
+            }
+
+            // 2. Enregistrement dans la BDD Supabase
+            const { data, error } = await _supabase
+                .from('rapports_concertation')
+                .insert([{
+                    titre_concertation: titre,
+                    organisation_source: organisation,
+                    date_evenement: dateDebut,
+                    date_fin: dateFin,
+                    parties_prenantes: parties,
+                    resume_global: resume,
+                    piece_jointe_url: fileUrl
+                }]);
+
+            if (error) throw error;
+
+            statusMsg.className = "status-msg status-success";
+            statusMsg.innerText = "✅ Résolution d'Atelier enregistrée avec succès dans Safidy Decision Engine !";
+            statusMsg.style.display = "block";
+            document.getElementById('concertationForm').reset();
+
+        } catch (err) {
+            console.error("Erreur d'enregistrement :", err);
+            statusMsg.className = "status-msg status-error";
+            statusMsg.innerText = "❌ Erreur lors de l'enregistrement : " + (err.message || "Veuillez vérifier votre connexion.");
+            statusMsg.style.display = "block";
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.innerText = "📥 Enregistrer dans Safidy Decision Engine";
+        }
+    });
+</script>
+
+</body>
+</html>
