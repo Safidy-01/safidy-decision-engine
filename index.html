@@ -3,173 +3,125 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Safidy Decision Engine - Ingestion Concertations & Ateliers</title>
+    <title>Safidy Decision Engine - Ingestion</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 20px; background-color: #f0f4f8; color: #102a43; }
-        .container { max-width: 700px; margin: auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); }
-        nav { display: flex; gap: 10px; margin-bottom: 25px; border-bottom: 2px solid #cbd5e1; padding-bottom: 12px; }
-        nav a { text-decoration: none; padding: 8px 16px; border-radius: 6px; font-weight: bold; font-size: 0.9rem; }
-        nav a.active { background-color: #0b69a3; color: white; }
-        nav a.inactive { background-color: #e2e8f0; color: #475569; }
-        
-        h1 { color: #0b69a3; text-align: center; margin-bottom: 5px; }
-        p.subtitle { text-align: center; color: #64748b; margin-bottom: 25px; font-size: 0.95rem; }
-
-        .form-group { margin-bottom: 18px; }
-        .date-row { display: flex; gap: 15px; }
-        .date-row .form-group { flex: 1; }
-
-        label { display: block; font-weight: bold; margin-bottom: 6px; color: #1e293b; font-size: 0.9rem; }
-        input[type="text"], input[type="date"], textarea, select { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; font-size: 0.95rem; }
-        textarea { resize: vertical; min-height: 90px; }
-        
-        .file-upload-box { border: 2px dashed #0b69a3; background-color: #f0f9ff; padding: 20px; text-align: center; border-radius: 8px; margin-top: 10px; }
-        .file-upload-box input[type="file"] { margin-top: 10px; }
-
-        button.btn-submit { background-color: #0b69a3; color: white; border: none; padding: 12px 20px; width: 100%; border-radius: 6px; font-size: 1rem; font-weight: bold; cursor: pointer; transition: background 0.2s; margin-top: 15px; }
-        button.btn-submit:hover { background-color: #084c77; }
-
-        .status-msg { margin-top: 15px; padding: 12px; border-radius: 6px; font-weight: bold; display: none; }
-        .status-success { background-color: #dcfce7; color: #15803d; border: 1px solid #86efac; }
-        .status-error { background-color: #fee2e2; color: #b91c1c; border: 1px solid #fca5a5; }
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; padding: 20px; background: #f8fafc; color: #1e293b; }
+        .container { max-width: 600px; margin: auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        h1 { color: #0369a1; font-size: 1.4rem; text-align: center; margin-bottom: 20px; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; font-weight: bold; margin-bottom: 5px; font-size: 0.9rem; }
+        input, select, textarea { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .file-box { border: 2px dashed #0369a1; padding: 15px; text-align: center; border-radius: 8px; background: #f0f9ff; }
+        button { width: 100%; background: #075985; color: white; border: none; padding: 12px; border-radius: 6px; font-weight: bold; font-size: 1rem; cursor: pointer; margin-top: 15px; }
+        .alert { padding: 12px; border-radius: 6px; margin-top: 15px; display: none; font-size: 0.9rem; }
+        .alert-success { background: #dcfce7; color: #15803d; }
+        .alert-error { background: #fee2e2; color: #b91c1c; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <nav>
-        <a href="index.html" class="active">🏛️ Ingestion Ateliers</a>
-        <a href="audit.html" class="inactive">📢 Audit Citoyen</a>
-        <a href="dashboard.html" class="inactive">📊 Moteur Décisionnel</a>
-    </nav>
+    <h1>📥 Concertation & Atelier — Safidy</h1>
 
-    <h1>🏛️ Safidy Decision Engine</h1>
-    <p class="subtitle">Collecte & Ingestion des Résolutions d'Ateliers, Colloques et Concertations</p>
+    <div class="form-group">
+        <label>Thématique / Intitulé de l'Atelier</label>
+        <input type="text" id="titre" placeholder="Ex: Atelier Régional de Réconciliation">
+    </div>
 
-    <form id="concertationForm">
+    <div class="grid-2">
         <div class="form-group">
-            <label for="titre_concertation">Titre de l'Atelier / Colloque / Concertation *</label>
-            <input type="text" id="titre_concertation" required placeholder="Ex: Atelier Régional sur la Transparence Budgétaire">
+            <label>Date de début</label>
+            <input type="date" id="dateDebut">
         </div>
-
         <div class="form-group">
-            <label for="organisation_source">Entité / Organisation Organisatrice *</label>
-            <input type="text" id="organisation_source" required placeholder="Ex: Association Safidy, Coalition Civique...">
+            <label>Date de fin (Optionnel)</label>
+            <input type="date" id="dateFin">
         </div>
+    </div>
 
-        <!-- Dates de début et de fin pour les événements multi-jours -->
-        <div class="date-row">
-            <div class="form-group">
-                <label for="date_debut">Date de début *</label>
-                <input type="date" id="date_debut" required>
-            </div>
-            <div class="form-group">
-                <label for="date_fin">Date de fin (Optionnel)</label>
-                <input type="date" id="date_fin">
-            </div>
+    <div class="form-group">
+        <label>Parties Prenantes Représentées</label>
+        <input type="text" id="partiesPrenantes" placeholder="Ex: TIM, HVM, TGV, GenZ">
+    </div>
+
+    <div class="form-group">
+        <label>Résumé des Résolutions / Idées Clés</label>
+        <textarea id="resume" rows="3" placeholder="Idées principales..."></textarea>
+    </div>
+
+    <div class="form-group">
+        <label>📄 Documents / Pièces Jointes</label>
+        <div class="file-box">
+            <input type="file" id="fichierAtelier">
         </div>
+    </div>
 
-        <div class="form-group">
-            <label for="parties_prenantes">Parties Prenantes Représentées</label>
-            <input type="text" id="parties_prenantes" placeholder="Ex: Parti TIM, Société Civile, Groupements de Jeunes, Syndicats...">
-        </div>
+    <button onclick="envoyerAtelier()">📥 Enregistrer dans Safidy Decision Engine</button>
 
-        <div class="form-group">
-            <label for="resume_global">Résumé des Résolutions / Idées Clés (Optionnel)</label>
-            <textarea id="resume_global" placeholder="Synthétisez brièvement les propositions phares issues des échanges..."></textarea>
-        </div>
-
-        <!-- Zone d'Upload Direct de Documents -->
-        <div class="form-group">
-            <label>📄 Documents / Pièces Jointes à Soumettre (PDF, Word, Excel, Scans)</label>
-            <div class="file-upload-box">
-                <p style="margin:0; color:#475569; font-size:0.9rem;">Sélectionnez vos fichiers directement depuis votre appareil :</p>
-                <input type="file" id="document_file" accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg">
-            </div>
-        </div>
-
-        <button type="submit" class="btn-submit" id="submitBtn">📥 Enregistrer dans Safidy Decision Engine</button>
-    </form>
-
-    <div id="statusMessage" class="status-msg"></div>
+    <div id="msgSuccess" class="alert alert-success"></div>
+    <div id="msgError" class="alert alert-error"></div>
 </div>
 
 <script>
-    // Configuration Supabase
     const SUPABASE_URL = 'https://tunanbanizxowofzkjql.supabase.co';
     const SUPABASE_KEY = 'sb_publishable_OyEsfDZaWZwhe0pkPkqtWQ_TPtbQ5iR';
     const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    document.getElementById('concertationForm').addEventListener('submit', async function(e) {
-        e.preventDefault();
-        
-        const submitBtn = document.getElementById('submitBtn');
-        const statusMsg = document.getElementById('statusMessage');
-        
-        submitBtn.disabled = true;
-        submitBtn.innerText = "⏳ Enregistrement et transfert du fichier en cours...";
-        statusMsg.style.display = "none";
+    async function envoyerAtelier() {
+        const btn = document.querySelector('button');
+        btn.disabled = true;
+        btn.innerText = "Enregistrement en cours...";
+
+        document.getElementById('msgSuccess').style.display = 'none';
+        document.getElementById('msgError').style.display = 'none';
 
         try {
-            const titre = document.getElementById('titre_concertation').value;
-            const organisation = document.getElementById('organisation_source').value;
-            const dateDebut = document.getElementById('date_debut').value;
-            const dateFin = document.getElementById('date_fin').value || dateDebut;
-            const parties = document.getElementById('parties_prenantes').value;
-            const resume = document.getElementById('resume_global').value;
-            const fileInput = document.getElementById('document_file');
-
             let fileUrl = null;
+            const fileInput = document.getElementById('fichierAtelier');
 
-            // 1. Upload du fichier dans Supabase Storage si un fichier est choisi
             if (fileInput.files.length > 0) {
                 const file = fileInput.files[0];
-                const fileExt = file.name.split('.').pop();
-                const fileName = `concertations/${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
-
-                const { data: storageData, error: storageError } = await _supabase.storage
+                const fileName = `atelier_${Date.now()}_${file.name}`;
+                const { data: uploadData, error: uploadErr } = await _supabase.storage
                     .from('documents_preuves')
                     .upload(fileName, file);
 
-                if (!storageError) {
-                    const { data: publicUrlData } = _supabase.storage
-                        .from('documents_preuves')
-                        .getPublicUrl(fileName);
-                    fileUrl = publicUrlData.publicUrl;
-                }
+                if (uploadErr) throw uploadErr;
+
+                const { data: publicUrlData } = _supabase.storage
+                    .from('documents_preuves')
+                    .getPublicUrl(fileName);
+                fileUrl = publicUrlData.publicUrl;
             }
 
-            // 2. Enregistrement dans la BDD Supabase
-            const { data, error } = await _supabase
-                .from('rapports_concertation')
-                .insert([{
-                    titre_concertation: titre,
-                    organisation_source: organisation,
-                    date_evenement: dateDebut,
-                    date_fin: dateFin,
-                    parties_prenantes: parties,
-                    resume_global: resume,
-                    piece_jointe_url: fileUrl
-                }]);
+            const dDebut = document.getElementById('dateDebut').value;
+            const dFin = document.getElementById('dateFin').value || dDebut;
+
+            const { error } = await _supabase.from('rapports_concertation').insert([{
+                titre: document.getElementById('titre').value,
+                date_debut: dDebut,
+                date_fin: dFin,
+                date_evenement: dDebut,
+                parties_prenantes: document.getElementById('partiesPrenantes').value,
+                resume_resolutions: document.getElementById('resume').value,
+                document_url: fileUrl
+            }]);
 
             if (error) throw error;
 
-            statusMsg.className = "status-msg status-success";
-            statusMsg.innerText = "✅ Résolution d'Atelier enregistrée avec succès dans Safidy Decision Engine !";
-            statusMsg.style.display = "block";
-            document.getElementById('concertationForm').reset();
+            document.getElementById('msgSuccess').innerText = "✅ Rapport d'atelier enregistré avec succès !";
+            document.getElementById('msgSuccess').style.display = 'block';
 
         } catch (err) {
-            console.error("Erreur d'enregistrement :", err);
-            statusMsg.className = "status-msg status-error";
-            statusMsg.innerText = "❌ Erreur lors de l'enregistrement : " + (err.message || "Veuillez vérifier votre connexion.");
-            statusMsg.style.display = "block";
+            document.getElementById('msgError').innerText = "❌ Erreur : " + err.message;
+            document.getElementById('msgError').style.display = 'block';
         } finally {
-            submitBtn.disabled = false;
-            submitBtn.innerText = "📥 Enregistrer dans Safidy Decision Engine";
+            btn.disabled = false;
+            btn.innerText = "📥 Enregistrer dans Safidy Decision Engine";
         }
-    });
+    }
 </script>
 
 </body>
