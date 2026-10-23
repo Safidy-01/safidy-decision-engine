@@ -3,255 +3,164 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Safidy Decision Engine - Dashboard Stratégique</title>
+    <title>Safidy Decision Engine - Tableau de Bord</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 20px; background-color: #f8fafc; color: #1e293b; }
-        .container { max-width: 1200px; margin: auto; }
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; padding: 20px; background: #f8fafc; color: #1e293b; }
+        .container { max-width: 900px; margin: auto; }
+        h1 { color: #0369a1; text-align: center; margin-bottom: 5px; }
+        .subtitle { text-align: center; color: #64748b; font-size: 0.95rem; margin-bottom: 25px; }
+        .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 25px; }
+        .kpi-card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); border-left: 5px solid #0369a1; }
+        .kpi-card.audit { border-left-color: #0284c7; }
+        .kpi-card.atelier { border-left-color: #0d9488; }
+        .kpi-card.prejudice { border-left-color: #e11d48; }
+        .kpi-title { font-size: 0.8rem; font-weight: bold; color: #64748b; text-transform: uppercase; }
+        .kpi-value { font-size: 1.8rem; font-weight: bold; color: #0f172a; margin-top: 5px; }
         
-        nav { display: flex; gap: 10px; margin-bottom: 25px; background: white; padding: 15px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
-        nav a { text-decoration: none; padding: 8px 16px; border-radius: 6px; font-weight: bold; font-size: 0.9rem; }
-        nav a.active { background-color: #0b69a3; color: white; }
-        nav a.inactive { background-color: #f1f5f9; color: #475569; }
-
-        header { text-align: center; margin-bottom: 30px; }
-        h1 { color: #0b69a3; margin-bottom: 5px; }
-        p.subtitle { color: #64748b; margin: 0; font-size: 0.95rem; }
-
-        /* KPI Cards */
-        .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; margin-bottom: 30px; }
-        .kpi-card { background: white; padding: 20px; border-radius: 10px; border-left: 5px solid #0b69a3; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
-        .kpi-card h3 { margin: 0; font-size: 0.85rem; color: #64748b; text-transform: uppercase; }
-        .kpi-card .number { font-size: 1.8rem; font-weight: bold; color: #0f172a; margin-top: 8px; }
-
-        /* Sections / Volets */
-        .section-title { font-size: 1.25rem; color: #0b69a3; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px; margin-top: 40px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; }
+        .section { background: white; padding: 20px; border-radius: 10px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        .section-title { font-size: 1.1rem; font-weight: bold; color: #0f172a; margin-bottom: 15px; display: flex; align-items: center; gap: 8px; }
         
-        .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(450px, 1fr)); gap: 20px; }
-        .card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); margin-bottom: 20px; }
-
-        /* Table priorisation */
         table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.9rem; }
-        th, td { text-align: left; padding: 12px; border-bottom: 1px solid #e2e8f0; }
-        th { background-color: #f8fafc; color: #475569; font-weight: bold; }
+        th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid #e2e8f0; }
+        th { background: #f1f5f9; color: #475569; font-weight: 600; }
         
-        .badge { padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 0.75rem; text-transform: uppercase; }
-        .badge-urgent { background-color: #fee2e2; color: #991b1b; }
-        .badge-important { background-color: #ffedd5; color: #9a3412; }
-        .badge-later { background-color: #dcfce7; color: #166534; }
-
-        .btn-view { color: #0b69a3; text-decoration: none; font-weight: bold; }
-        .btn-view:hover { text-decoration: underline; }
+        .btn-link { background: #0284c7; color: white; text-decoration: none; padding: 5px 10px; border-radius: 4px; font-size: 0.8rem; font-weight: bold; display: inline-block; }
+        .btn-link:hover { background: #0369a1; }
+        .no-doc { color: #94a3b8; font-style: italic; font-size: 0.85rem; }
+        
+        .badge { display: inline-block; padding: 3px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: bold; }
+        .badge-audit { background: #e0f2fe; color: #0369a1; }
+        .badge-atelier { background: #ccfbf1; color: #0f766e; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <nav>
-        <a href="index.html" class="inactive">🏛️ Ingestion Ateliers</a>
-        <a href="audit.html" class="inactive">📢 Audit Citoyen</a>
-        <a href="dashboard.html" class="active">📊 Moteur Décisionnel</a>
-    </nav>
+    <h1>🏛️ Safidy Decision Engine</h1>
+    <div class="subtitle">Tableau de Bord Stratégique — Analyse Croisée & Coffre-fort des Preuves</div>
 
-    <header>
-        <h1>📊 Safidy Decision Engine</h1>
-        <p class="subtitle">Tableau de Bord Stratégique — Analyse Croisée, Simulation & Priorisation des Actions</p>
-    </header>
-
-    <!-- KPI Généraux -->
+    <!-- KPIs -->
     <div class="kpi-grid">
-        <div class="kpi-card">
-            <h3>Signalements Audit Citoyen</h3>
-            <div class="number" id="kpiAudits">0</div>
+        <div class="kpi-card audit">
+            <div class="kpi-title">Signalements Audit Citoyen</div>
+            <div class="kpi-value" id="kpiAudit">0</div>
         </div>
-        <div class="kpi-card" style="border-left-color: #0284c7;">
-            <h3>Ateliers & Concertations</h3>
-            <div class="number" id="kpiConcertations">0</div>
+        <div class="kpi-card atelier">
+            <div class="kpi-title">Ateliers & Concertations</div>
+            <div class="kpi-value" id="kpiAtelier">0</div>
         </div>
-        <div class="kpi-card" style="border-left-color: #e11d48;">
-            <h3>Préjudice Estimé (MGA)</h3>
-            <div class="number" id="kpiPrejudice">0 Ar</div>
-        </div>
-        <div class="kpi-card" style="border-left-color: #16a34a;">
-            <h3>Actions Priorisées Générées</h3>
-            <div class="number" id="kpiActions">0</div>
+        <div class="kpi-card prejudice">
+            <div class="kpi-title">Préjudice Estimé Cumulé</div>
+            <div class="kpi-value" id="kpiPrejudice">0 Ar</div>
         </div>
     </div>
 
-    <!-- VOLET 1 & VOLET 2 : Vues analytiques -->
-    <div class="grid-2">
-        <div class="card">
-            <h3>📢 Volet 1 — Synthese Audit Citoyen</h3>
-            <canvas id="chartAudit"></canvas>
-        </div>
-        <div class="card">
-            <h3>🏛️ Volet 2 — Couverture des Concertations</h3>
-            <canvas id="chartConcertations"></canvas>
-        </div>
-    </div>
-
-    <!-- VOLET 3 : Coffre-Fort des Preuves -->
-    <div class="section-title">
-        <span>📁 Volet 3 — Coffre-fort des Preuves (Supabase Storage)</span>
-    </div>
-    <div class="card">
+    <!-- VOLET 3 : COFFRE-FORT DES PREUVES DYNAMIQUE -->
+    <div class="section">
+        <div class="section-title">📂 Volet 3 — Coffre-fort des Preuves (Supabase Storage)</div>
         <table>
             <thead>
                 <tr>
+                    <th>Type</th>
                     <th>Date</th>
-                    <th>Source / Événement</th>
-                    <th>Document Joint</th>
-                    <th>Action</th>
+                    <th>Source / Intitulé</th>
+                    <th>Pièce Jointe</th>
                 </tr>
             </thead>
-            <tbody id="storageDocsTable">
-                <tr><td colspan="4" style="text-align:center; color:#94a3b8;">Chargement des pièces justificatives...</td></tr>
+            <tbody id="tablePreuves">
+                <tr><td colspan="4" style="text-align: center; color: #64748b;">Chargement des données...</td></tr>
             </tbody>
         </table>
     </div>
-
-    <!-- VOLET 4 : MOTEUR DECISIONNEL & PRIORISATION DES TÂCHES -->
-    <div class="section-title">
-        <span>🎯 Volet 4 — Feuille de Route Priorisée & Modèle d'Impact (Bailleurs)</span>
-    </div>
-
-    <div class="card">
-        <h3>📋 Matrice de Priorisation des Actions (Urgent / Important / À faire plus tard)</h3>
-        <table>
-            <thead>
-                <tr>
-                    <th>Priorité</th>
-                    <th>Action de Plaidoyer / Réforme</th>
-                    <th>Source / Motif</th>
-                    <th>Impact Estimé (Gains)</th>
-                    <th>Budget Suivi (Ar)</th>
-                </tr>
-            </thead>
-            <tbody id="priorityActionsTable">
-                <tr>
-                    <td><span class="badge badge-urgent">🔴 Urgent</span></td>
-                    <td>Déploiement d'un guichet de suivi citoyen anti-tracas</td>
-                    <td>Fort taux de retard/surcoût détecté (Audit)</td>
-                    <td>+15% à +20% de recettes administratives</td>
-                    <td><strong>12 000 000 Ar</strong></td>
-                </tr>
-                <tr>
-                    <td><span class="badge badge-important">🟠 Important</span></td>
-                    <td>Informatisation de la délivrance des actes officiels</td>
-                    <td>Résolution issue de l'Atelier Régional</td>
-                    <td>Réduction des délais de 50%</td>
-                    <td><strong>25 000 000 Ar</strong></td>
-                </tr>
-                <tr>
-                    <td><span class="badge badge-later">🟢 À faire plus tard</span></td>
-                    <td>Réforme du cadre réglementaire de la fonction publique</td>
-                    <td>Synthèse globale des colloques</td>
-                    <td>Transparence institutionnelle durable</td>
-                    <td><strong>45 000 000 Ar</strong></td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
-
-    <div class="grid-2">
-        <div class="card">
-            <h3>📈 Simulation d'Impact Financier (Recettes Publics)</h3>
-            <canvas id="chartSimulation"></canvas>
-        </div>
-        <div class="card" style="background:#f0f9ff; border: 1px solid #bae6fd;">
-            <h3>📄 Générateur de Fiche SMART Bailleurs</h3>
-            <p style="font-size: 0.9rem; color:#0369a1;">Exportez la synthèse opérationnelle des actions priorisées pour vos soumissions de projets (FID, AfricTivistes, Code for Africa).</p>
-            <button onclick="alert('Export de la fiche d\'action SMART au format PDF en cours de préparation...')" style="background-color:#0b69a3; color:white; border:none; padding:10px 18px; border-radius:6px; font-weight:bold; cursor:pointer;">🖨️ Imprimer la Fiche Stratégique</button>
-        </div>
-    </div>
-
 </div>
 
 <script>
-    // Configuration Supabase
     const SUPABASE_URL = 'https://tunanbanizxowofzkjql.supabase.co';
     const SUPABASE_KEY = 'sb_publishable_OyEsfDZaWZwhe0pkPkqtWQ_TPtbQ5iR';
     const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    async function loadDashboardData() {
+    async function chargerDashboard() {
         try {
-            // 1. Charger Audits Citoyens
-            const { data: audits, error: errAudit } = await _supabase.from('audit_citoyen_signalements').select('*');
-            if (!errAudit && audits) {
-                document.getElementById('kpiAudits').innerText = audits.length;
-            }
+            // 1. Récupération des Audits Citoyens
+            const { data: audits, error: errAudit } = await _supabase
+                .from('audit_citoyen_signalements')
+                .select('*');
 
-            // 2. Charger Concertations & Pièces Jointes
-            const { data: concertations, error: errConc } = await _supabase.from('rapports_concertation').select('*');
-            const tbodyDocs = document.getElementById('storageDocsTable');
-            
-            if (!errConc && concertations) {
-                document.getElementById('kpiConcertations').innerText = concertations.length;
-                document.getElementById('kpiActions').innerText = concertations.length + 3; // Exemple dynamique
+            if (errAudit) throw errAudit;
 
-                tbodyDocs.innerHTML = '';
-                concertations.forEach(c => {
-                    const row = document.createElement('tr');
-                    const fileLink = c.piece_jointe_url 
-                        ? `<a href="${c.piece_jointe_url}" target="_blank" class="btn-view">👁️ voir le document</a>`
-                        : `<span style="color:#cbd5e1;">Aucun fichier</span>`;
+            // 2. Récupération des Concertations / Ateliers
+            const { data: ateliers, error: errAtelier } = await _supabase
+                .from('rapports_concertation')
+                .select('*');
 
-                    row.innerHTML = `
-                        <td>${c.date_evenement || '-'}</td>
-                        <td><strong>${c.titre_concertation}</strong> (${c.organisation_source || 'Safidy'})</td>
-                        <td>${c.piece_jointe_url ? '📄 Pièce jointe reçue' : 'Aucune'}</td>
-                        <td>${fileLink}</td>
-                    `;
-                    tbodyDocs.appendChild(row);
+            if (errAtelier) throw errAtelier;
+
+            // --- Mise à jour des KPIs ---
+            document.getElementById('kpiAudit').innerText = audits.length;
+            document.getElementById('kpiAtelier').innerText = ateliers.length;
+
+            let totalPrejudice = 0;
+            audits.forEach(a => {
+                totalPrejudice += (parseFloat(a.cout_transport) || 0) + (parseFloat(a.perte_financiere) || 0);
+            });
+            document.getElementById('kpiPrejudice').innerText = totalPrejudice.toLocaleString('fr-FR') + " Ar";
+
+            // --- Remplissage du Coffre-fort des Preuves ---
+            const tbody = document.getElementById('tablePreuves');
+            tbody.innerHTML = '';
+
+            let listeTotale = [];
+
+            // Traitement Audits
+            audits.forEach(a => {
+                listeTotale.push({
+                    type: 'Audit Citoyen',
+                    badgeClass: 'badge-audit',
+                    date: a.date_depot || a.created_at?.split('T')[0] || '-',
+                    source: a.service_concerne || a.titre_signalement || 'Signalement Citoyen',
+                    url: a.preuve_url
                 });
+            });
+
+            // Traitement Ateliers
+            ateliers.forEach(at => {
+                listeTotale.push({
+                    type: 'Concertation',
+                    badgeClass: 'badge-atelier',
+                    date: at.date_debut || at.date_evenement || at.created_at?.split('T')[0] || '-',
+                    source: at.titre || at.parties_prenantes || 'Atelier Régional',
+                    url: at.document_url
+                });
+            });
+
+            if (listeTotale.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: #64748b;">Aucune donnée enregistrée pour le moment.</td></tr>';
+                return;
             }
+
+            listeTotale.forEach(item => {
+                const tr = document.createElement('tr');
+                
+                const actionBtn = item.url 
+                    ? `<a href="${item.url}" target="_blank" class="btn-link">📄 Consulter le document</a>`
+                    : `<span class="no-doc">Aucun fichier</span>`;
+
+                tr.innerHTML = `
+                    <td><span class="badge ${item.badgeClass}">${item.type}</span></td>
+                    <td>${item.date}</td>
+                    <td><strong>${item.source}</strong></td>
+                    <td>${actionBtn}</td>
+                `;
+                tbody.appendChild(tr);
+            });
 
         } catch (err) {
-            console.error("Erreur de chargement des données :", err);
+            console.error("Erreur Dashboard :", err);
         }
     }
 
-    // Initialisation des graphiques
-    function initCharts() {
-        // Graphique Audit
-        new Chart(document.getElementById('chartAudit'), {
-            type: 'doughnut',
-            data: {
-                labels: ['Retards administratifs', 'Pression/Corruption', 'Manque d\'information'],
-                datasets: [{ data: [45, 35, 20], backgroundColor: ['#0b69a3', '#e11d48', '#f59e0b'] }]
-            }
-        });
-
-        // Graphique Concertations
-        new Chart(document.getElementById('chartConcertations'), {
-            type: 'bar',
-            data: {
-                labels: ['Analamanga', 'Vakinankaratra', 'Atsinanana', 'Boeny'],
-                datasets: [{ label: 'Ateliers organisés', data: [4, 2, 3, 1], backgroundColor: '#0284c7' }]
-            }
-        });
-
-        // Graphique Simulation
-        new Chart(document.getElementById('chartSimulation'), {
-            type: 'line',
-            data: {
-                labels: ['Mois 1', 'Mois 2', 'Mois 3', 'Mois 4', 'Mois 5', 'Mois 6'],
-                datasets: [{
-                    label: 'Hausse estimée des recettes publiques (+%)',
-                    data: [0, 5, 10, 15, 18, 22],
-                    borderColor: '#16a34a',
-                    tension: 0.3,
-                    fill: false
-                }]
-            }
-        });
-    }
-
-    window.onload = function() {
-        loadDashboardData();
-        initCharts();
-    };
+    chargerDashboard();
 </script>
 
 </body>
