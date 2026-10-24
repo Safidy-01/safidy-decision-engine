@@ -3,88 +3,83 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Audit Citoyen - Safidy</title>
+    <title>Safidy - Audit Citoyen</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; margin: 0; padding: 20px; background: #f8fafc; color: #1e293b; }
-        .container { max-width: 600px; margin: auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
-        h1 { color: #16a34a; font-size: 1.4rem; text-align: center; margin-bottom: 20px; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f8fafc; padding: 20px; color: #1e293b; }
+        .form-card { max-width: 600px; margin: auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        h2 { color: #0284c7; margin-top: 0; text-align: center; }
         .form-group { margin-bottom: 15px; }
-        label { display: block; font-weight: bold; margin-bottom: 5px; font-size: 0.9rem; }
-        input, select { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; }
-        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .file-box { border: 2px dashed #16a34a; padding: 15px; text-align: center; border-radius: 8px; background: #f0fdf4; }
-        button { width: 100%; background: #16a34a; color: white; border: none; padding: 12px; border-radius: 6px; font-weight: bold; font-size: 1rem; cursor: pointer; margin-top: 15px; }
-        .alert { padding: 12px; border-radius: 6px; margin-top: 15px; display: none; font-size: 0.9rem; }
-        .alert-success { background: #dcfce7; color: #15803d; }
-        .alert-error { background: #fee2e2; color: #b91c1c; }
+        label { display: block; font-weight: 600; font-size: 0.9rem; margin-bottom: 5px; color: #475569; }
+        input, select, textarea { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; font-size: 0.95rem; }
+        button { width: 100%; background: #0284c7; color: white; border: none; padding: 12px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 1rem; margin-top: 10px; }
+        button:hover { background: #0369a1; }
+        .msg { padding: 10px; border-radius: 6px; margin-top: 15px; display: none; text-align: center; font-weight: bold; }
+        .msg.success { background: #dcfce7; color: #15803d; }
+        .msg.error { background: #fee2e2; color: #b91c1c; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h1>📢 Audit Citoyen — Signalement</h1>
+<div class="form-card">
+    <h2>📢 Audit Citoyen — Signalement</h2>
+    <form id="auditForm">
+        
+        <div class="form-group">
+            <label for="institution">Institution / Entité principale *</label>
+            <input type="text" id="institution" placeholder="Ex: Ministère des Finances, Université, BIANCO, Présidence..." required>
+        </div>
 
-    <div class="grid-2">
         <div class="form-group">
-            <label>Service concerné</label>
-            <input type="text" id="service" placeholder="Ex: Service retraite">
+            <label for="service">Service ou Guichet concerné *</label>
+            <input type="text" id="service" placeholder="Ex: Service des Titres, Direction des Examens, Guichet des Permis..." required>
         </div>
-        <div class="form-group">
-            <label>Documents demandés</label>
-            <input type="text" id="docs" placeholder="Ex: Certificat de résidence">
-        </div>
-    </div>
 
-    <div class="grid-2">
         <div class="form-group">
-            <label>Date de dépôt</label>
-            <input type="date" id="dateDepot">
-        </div>
-        <div class="form-group">
-            <label>Délai officiel annoncé</label>
-            <input type="text" id="delai" placeholder="Ex: 3 jours">
-        </div>
-    </div>
-
-    <div class="grid-2">
-        <div class="form-group">
-            <label>Nombre de déplacements</label>
-            <input type="number" id="deplacements" value="1">
-        </div>
-        <div class="form-group">
-            <label>Pression / Corruption ?</label>
-            <select id="pression">
-                <option value="Non">Non</option>
-                <option value="Sous-entendue / Implicite">Sous-entendue / Implicite</option>
-                <option value="Explicite / Exigée">Explicite / Exigée</option>
+            <label for="region">Région *</label>
+            <select id="region" required>
+                <option value="">-- Sélectionner une région --</option>
+                <option value="Analamanga">Analamanga</option>
+                <option value="Vakinankaratra">Vakinankaratra</option>
+                <option value="Atsinanana">Atsinanana</option>
+                <option value="Boeny">Boeny</option>
+                <option value="Autre">Autre région</option>
             </select>
         </div>
-    </div>
 
-    <div class="grid-2">
         <div class="form-group">
-            <label>Coût transport engagé (Ar)</label>
-            <input type="number" id="coutTransport" placeholder="Ex: 20000">
+            <label for="motif">Motif principal du dysfonctionnement *</label>
+            <select id="motif" required>
+                <option value="Retards administratifs">Retards administratifs abusifs</option>
+                <option value="Pression / Corruption">Demande d'argent / Pression / Corruption</option>
+                <option value="Manque d'information">Manque d'information / Absence d'agent</option>
+                <option value="Autre">Autre tracasserie</option>
+            </select>
         </div>
+
         <div class="form-group">
-            <label>Perte financière temps (Ar)</label>
-            <input type="number" id="perteTemps" placeholder="Ex: 50000">
+            <label for="description">Description détaillée des faits *</label>
+            <textarea id="description" rows="4" placeholder="Expliquez brièvement la situation subie..." required></textarea>
         </div>
-    </div>
 
-    <!-- NOUVEAU CHAMP UPLOAD DIRECT -->
-    <div class="form-group">
-        <label>📎 Document / Scan / Preuve (Joindre un fichier direct)</label>
-        <div class="file-box">
-            <input type="file" id="fichierPreuve">
+        <div class="form-group">
+            <label for="fraisTransport">Frais de transport engagés inutilement (en Ariary)</label>
+            <input type="number" id="fraisTransport" placeholder="Ex: 10000" min="0">
         </div>
-    </div>
 
-    <button onclick="envoyerAudit()">Enregistrer le Signalement d'Audit Citoyen</button>
+        <div class="form-group">
+            <label for="perteFinanciere">Autre perte financière subie (en Ariary)</label>
+            <input type="number" id="perteFinanciere" placeholder="Ex: 50000" min="0">
+        </div>
 
-    <div id="msgSuccess" class="alert alert-success"></div>
-    <div id="msgError" class="alert alert-error"></div>
+        <div class="form-group">
+            <label for="preuve">Pièce jointe / Preuve (Photo, PDF, Audio, Vidéo - Max 20 Mo)</label>
+            <input type="file" id="preuve" accept="image/*,application/pdf,audio/*,video/*">
+        </div>
+
+        <button type="submit" id="btnSubmit">Envoyer le signalement</button>
+    </form>
+    <div id="msgBox" class="msg"></div>
 </div>
 
 <script>
@@ -92,60 +87,69 @@
     const SUPABASE_KEY = 'sb_publishable_OyEsfDZaWZwhe0pkPkqtWQ_TPtbQ5iR';
     const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    async function envoyerAudit() {
-        const btn = document.querySelector('button');
+    document.getElementById('auditForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const btn = document.getElementById('btnSubmit');
+        const msgBox = document.getElementById('msgBox');
         btn.disabled = true;
-        btn.innerText = "Enregistrement en cours...";
-
-        document.getElementById('msgSuccess').style.display = 'none';
-        document.getElementById('msgError').style.display = 'none';
+        btn.innerText = "Envoi en cours...";
+        msgBox.style.display = 'none';
 
         try {
-            let fileUrl = null;
-            const fileInput = document.getElementById('fichierPreuve');
-
-            // Upload direct du fichier si présent
+            let preuveUrl = null;
+            const fileInput = document.getElementById('preuve');
+            
             if (fileInput.files.length > 0) {
                 const file = fileInput.files[0];
-                const fileName = `audit_${Date.now()}_${file.name}`;
-                const { data: uploadData, error: uploadErr } = await _supabase.storage
+                const fileExt = file.name.split('.').pop();
+                const fileName = `audit_${Date.now()}.${fileExt}`;
+
+                const { data: uploadData, error: uploadError } = await _supabase.storage
                     .from('documents_preuves')
                     .upload(fileName, file);
 
-                if (uploadErr) throw uploadErr;
+                if (uploadError) throw uploadError;
 
-                const { data: publicUrlData } = _supabase.storage
+                const { data: urlData } = _supabase.storage
                     .from('documents_preuves')
                     .getPublicUrl(fileName);
-                fileUrl = publicUrlData.publicUrl;
+                
+                preuveUrl = urlData.publicUrl;
             }
 
-            // Insertion dans la table
-            const { error } = await _supabase.from('audit_citoyen_signalements').insert([{
+            const payload = {
+                institution_principale: document.getElementById('institution').value,
                 service_concerne: document.getElementById('service').value,
-                documents_demandes: document.getElementById('docs').value,
-                date_depot: document.getElementById('dateDepot').value,
-                delai_annonce: document.getElementById('delai').value,
-                nb_deplacements: parseInt(document.getElementById('deplacements').value) || 0,
-                pression_corruption: document.getElementById('pression').value,
-                cout_transport: parseFloat(document.getElementById('coutTransport').value) || 0,
-                perte_financiere: parseFloat(document.getElementById('perteTemps').value) || 0,
-                preuve_url: fileUrl
-            }]);
+                region: document.getElementById('region').value,
+                motif: document.getElementById('motif').value,
+                description: document.getElementById('description').value,
+                cout_transport: parseFloat(document.getElementById('fraisTransport').value) || 0,
+                perte_financiere: parseFloat(document.getElementById('perteFinanciere').value) || 0,
+                preuve_url: preuveUrl,
+                statut: 'en_attente'
+            };
 
-            if (error) throw error;
+            const { error: insertError } = await _supabase
+                .from('audit_citoyen_signalements')
+                .insert([payload]);
 
-            document.getElementById('msgSuccess').innerText = "✅ Signalement enregistré avec succès !";
-            document.getElementById('msgSuccess').style.display = 'block';
+            if (insertError) throw insertError;
+
+            msgBox.className = 'msg success';
+            msgBox.innerText = " Signalement enregistré avec succès ! Merci de votre contribution.";
+            msgBox.style.display = 'block';
+            document.getElementById('auditForm').reset();
 
         } catch (err) {
-            document.getElementById('msgError').innerText = "❌ Erreur : " + err.message;
-            document.getElementById('msgError').style.display = 'block';
+            console.error("Erreur Audit :", err);
+            msgBox.className = 'msg error';
+            msgBox.innerText = "Erreur lors de l'envoi : " + err.message;
+            msgBox.style.display = 'block';
         } finally {
             btn.disabled = false;
-            btn.innerText = "Enregistrer le Signalement d'Audit Citoyen";
+            btn.innerText = "Envoyer le signalement";
         }
-    }
+    });
 </script>
 
 </body>
