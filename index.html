@@ -139,11 +139,12 @@
             msgBox.style.display = 'block';
             document.getElementById('concertationForm').reset();
 
-        } catch (err) {
-            console.error("Erreur Concertation :", err);
+        }  catch (err) {
+            console.error("Détails complets de l'erreur :", err);
             msgBox.className = 'msg error';
-            msgBox.innerText = "Erreur lors de l'enregistrement : " + err.message;
+            msgBox.innerText = "Erreur : " + (err.message || JSON.stringify(err));
             msgBox.style.display = 'block';
+        
         } finally {
             btn.disabled = false;
             btn.innerText = "Enregistrer le compte-rendu";
