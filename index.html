@@ -104,13 +104,13 @@
                 const fileName = `concertation_${Date.now()}.${fileExt}`;
 
                 const { data: uploadData, error: uploadError } = await _supabase.storage
-                    .from('DOCUMENTS_PREUVES')
+                    .from('documents_preuves')
                     .upload(fileName, file);
 
                 if (uploadError) throw uploadError;
 
                 const { data: urlData } = _supabase.storage
-                    .from('DOCUMENTS_PREUVES')
+                    .from('documents_preuves')
                     .getPublicUrl(fileName);
                 
                 documentUrl = urlData.publicUrl;
