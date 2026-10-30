@@ -3,224 +3,223 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Safidy Decision Engine - Dashboard</title>
+    <title>Safidy 01 Audit Citoyen - Dashboard Décideur</title>
+    <!-- Chart.js pour les graphiques -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- SDK Supabase pour se connecter aux vraies données -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #f1f5f9; margin: 0; padding: 20px; color: #0f172a; }
-        .container { max-width: 1100px; margin: auto; }
-        header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
-        h1 { margin: 0; font-size: 1.5rem; color: #0f172a; }
-        
-        /* Navigation par Onglets */
-        .tabs { display: flex; gap: 10px; margin-bottom: 20px; }
-        .tab-btn { flex: 1; padding: 12px; border: none; background: #e2e8f0; color: #475569; font-weight: bold; border-radius: 8px; cursor: pointer; transition: 0.3s; }
-        .tab-btn.active { background: #0284c7; color: white; }
-        
-        /* Cartes d'indicateurs */
-        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; margin-bottom: 25px; }
-        .stat-card { background: white; padding: 18px; border-radius: 10px; box-shadow: 0 2px 6px rgba(0,0,0,0.04); text-align: center; }
-        .stat-card h3 { margin: 0; font-size: 0.85rem; color: #64748b; text-transform: uppercase; }
-        .stat-card .number { font-size: 1.8rem; font-weight: bold; color: #0284c7; margin-top: 8px; }
-
-        /* Contenu des Vues */
-        .view-content { display: none; }
-        .view-content.active { display: block; }
-        
-        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); margin-bottom: 20px; }
-        .card h2 { margin-top: 0; color: #334155; font-size: 1.2rem; border-bottom: 2px solid #f1f5f9; padding-bottom: 10px; }
-        
-        /* Unité de traitement des tâches */
-        .task-item { border-left: 4px solid #0284c7; background: #f8fafc; padding: 12px 15px; margin-bottom: 10px; border-radius: 0 8px 8px 0; }
-        .task-item.urgent { border-left-color: #ef4444; }
-        .task-item.important { border-left-color: #f59e0b; }
-        .task-header { display: flex; justify-content: space-between; font-weight: bold; font-size: 0.95rem; }
-        .task-meta { font-size: 0.85rem; color: #64748b; margin-top: 5px; }
-        
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        th, td { text-align: left; padding: 10px; border-bottom: 1px solid #e2e8f0; font-size: 0.9rem; }
-        th { background: #f8fafc; color: #475569; }
+        :root {
+            --primary: #1e3a8a;
+            --accent: #0d9488;
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --text: #1e293b;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 15px;
+        }
+        .header-box {
+            background: linear-gradient(135deg, #1e3a8a, #0d9488);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+        .grid-container {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+        @media (min-width: 768px) {
+            .grid-container { grid-template-columns: 1fr 1fr; }
+        }
+        .card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 18px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        .slider-group { margin-bottom: 15px; }
+        .slider-group label { display: block; font-weight: bold; margin-bottom: 5px; font-size: 0.9rem; }
+        input[type=range] { width: 100%; accent-color: var(--accent); }
+        .metric-badge {
+            display: inline-block;
+            background: #e0f2fe;
+            color: #0369a1;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-weight: bold;
+            margin-top: 5px;
+        }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 0.85rem; }
+        th, td { border: 1px solid #e2e8f0; padding: 10px; text-align: left; }
+        th { background-color: #f1f5f9; color: var(--primary); }
+        .table-wrapper { overflow-x: auto; }
+        .status-box { margin-top: 10px; font-size: 0.85rem; padding: 8px; border-radius: 6px; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <header>
-        <div>
-            <h1>⚙️ Safidy Decision Engine</h1>
-            <small style="color: #64748b;">Moteur de traitement, planification et priorisation des actions</small>
-        </div>
-    </header>
-
-    <!-- Navigation Onglets -->
-    <div class="tabs">
-        <button class="tab-btn active" onclick="switchView('audit')">📢 Dashboard Audit Citoyen</button>
-        <button class="tab-btn" onclick="switchView('concertation')">🏛️ Dashboard Concertations</button>
-        <button class="tab-btn" onclick="switchView('engine')">🚀 Safidy Decision Engine (Global)</button>
+    <div class="header-box">
+        <h1>Safidy 01 - Tableaux de Pilotage Décisionnel</h1>
+        <p><strong>Vision :</strong> Transformez chaque donnée d'audit citoyen en action publique traçable et mesurable.</p>
     </div>
 
-    <!-- ========================================== -->
-    <!-- VUE 1 : AUDIT CITOYEN                      -->
-    <!-- ========================================== -->
-    <div id="view-audit" class="view-content active">
-        <div class="stats-grid">
-            <div class="stat-card">
-                <h3>Signalements Reçus</h3>
-                <div class="number" id="audit-count">0</div>
-            </div>
-            <div class="stat-card">
-                <h3>Pertes Financières Cumulées</h3>
-                <div class="number" id="audit-pertes">0 Ar</div>
-            </div>
-        </div>
-
-        <div class="card">
-            <h2>🚨 Traitement des Urgences Terrain (Audits)</h2>
-            <div id="audit-tasks-list">Chargement des urgences...</div>
-        </div>
-    </div>
-
-    <!-- ========================================== -->
-    <!-- VUE 2 : CONCERTATIONS & ATELIERS           -->
-    <!-- ========================================== -->
-    <div id="view-concertation" class="view-content">
-        <div class="stats-grid">
-            <div class="stat-card">
-                <h3>Ateliers / Concertations</h3>
-                <div class="number" id="concertation-count">0</div>
-            </div>
-            <div class="stat-card">
-                <h3>Résolutions Extraites</h3>
-                <div class="number" id="resolutions-count">0</div>
-            </div>
-        </div>
-
-        <div class="card">
-            <h2>📅 Planification des Tâches issues des Ateliers</h2>
-            <div id="concertation-tasks-list">Chargement du plan de travail...</div>
-        </div>
-    </div>
-
-    <!-- ========================================== -->
-    <!-- VUE 3 : ENGINE COMBINÉ (DECISION ENGINE)   -->
-    <!-- ========================================== -->
-    <div id="view-engine" class="view-content">
-        <div class="card">
-            <h2>🎯 Cockpit Stratégique Safidy Engine</h2>
-            <p style="color: #64748b; font-size: 0.9rem;">
-                Synthèse croisant les dysfonctionnements du terrain avec les propositions d'actions pour dégager la feuille de route priorisée.
-            </p>
-            <div id="engine-summary-list">Chargement du cockpit décisionnel...</div>
-        </div>
-    </div>
-</div>
-
-<script>
-    const SUPABASE_URL = 'https://tunanbanizxowofzkjql.supabase.co';
-    const SUPABASE_KEY = 'sb_publishable_OyEsfDZaWZwhe0pkPkqtWQ_TPtbQ5iR';
-    const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-    // Changer de vue
-    function switchView(viewName) {
-        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-        document.querySelectorAll('.view-content').forEach(view => view.classList.remove('active'));
+    <!-- SIMULATEUR & GRAPHES -->
+    <div class="grid-container">
         
-        if (viewName === 'audit') {
-            document.querySelectorAll('.tab-btn')[0].classList.add('active');
-            document.getElementById('view-audit').classList.add('active');
-        } else if (viewName === 'concertation') {
-            document.querySelectorAll('.tab-btn')[1].classList.add('active');
-            document.getElementById('view-concertation').classList.add('active');
-        } else {
-            document.querySelectorAll('.tab-btn')[2].classList.add('active');
-            document.getElementById('view-engine').classList.add('active');
-        }
-    }
+        <div class="card">
+            <h2>🎛️ Simulateur d'Impact Budget & Terrain</h2>
+            
+            <div class="slider-group">
+                <label for="budgetSlider">Budget de Campagne Récupéré / Alloué (MGA) :</label>
+                <input type="range" id="budgetSlider" min="5000000" max="100000000" step="5000000" value="48000000" oninput="updateSimulation()">
+                <div class="metric-badge" id="budgetValue">48 000 000 MGA</div>
+            </div>
 
-    // Chargement des données Supabase
-    async function loadDashboardData() {
-        try {
-            // 1. Récupération des Audits
-            const { data: audits, error: errAudit } = await _supabase
-                .from('audit_citoyen_signalements')
-                .select('*');
-            if (errAudit) throw errAudit;
+            <div class="slider-group">
+                <label for="complaintsSlider">Signalements & Audits Traités :</label>
+                <input type="range" id="complaintsSlider" min="10" max="500" step="10" value="150" oninput="updateSimulation()">
+                <div class="metric-badge" id="complaintsValue">150 signalements</div>
+            </div>
 
-            // 2. Récupération des Concertations
-            const { data: concertations, error: errConcertation } = await _supabase
-                .from('rapports_concertation')
-                .select('*');
-            if (errConcertation) throw errConcertation;
+            <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 15px 0;">
 
-            // --- MISE À JOUR VUE AUDIT ---
-            document.getElementById('audit-count').innerText = audits ? audits.length : 0;
-            let totalPertes = 0;
-            let auditTasksHtml = '';
+            <div style="font-size: 0.9rem;">
+                <strong>Indicateur de changement calculé :</strong>
+                <p id="impactResult" style="color: var(--accent); font-weight: bold; margin-top: 5px;">
+                    Calcul en cours...
+                </p>
+            </div>
+            
+            <div id="statusMessage" class="status-box">Connexion à Supabase...</div>
+        </div>
 
-            if (audits && audits.length > 0) {
-                audits.forEach(item => {
-                    totalPertes += (item.cout_transport || 0) + (item.perte_financiere || 0);
-                    auditTasksHtml += `
-                        <div class="task-item urgent">
-                            <div class="task-header">
-                                <span>[URGENT P1] ${item.institution_principale || 'Institution'} — ${item.service_concerne || 'Service'}</span>
-                                <span style="color: #ef4444;">${item.region || ''}</span>
-                            </div>
-                            <div><strong>Motif :</strong> ${item.motif || 'Non spécifié'} — ${item.description || ''}</div>
-                            <div class="task-meta">Pertes directes : ${(item.cout_transport || 0) + (item.perte_financiere || 0)} Ar | Statut : ${item.statut || 'en_attente'}</div>
-                        </div>
-                    `;
-                });
-            } else {
-                auditTasksHtml = '<p>Aucun signalement d\'audit à traiter pour le moment.</p>';
+        <div class="card">
+            <h2>📊 Répartition Budgétaire Stratégique</h2>
+            <canvas id="budgetChart"></canvas>
+        </div>
+
+    </div>
+
+    <!-- TABLEAU DE PILOTAGE -->
+    <div class="card" style="margin-top: 20px;">
+        <h2>📋 Données d'Analyse Réelles (Supabase)</h2>
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Fichier Analysé</th>
+                        <th>Actions Urgentes</th>
+                        <th>Actions Importantes</th>
+                        <th>Forces</th>
+                        <th>Faiblesses</th>
+                    </tr>
+                </thead>
+                <tbody id="swotTableBody">
+                    <tr>
+                        <td colspan="5" style="text-align:center;">Chargement des analyses depuis Supabase...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // CONFIGURATION SUPABASE RÉELLE
+        const SUPABASE_URL = "https://tunanbanizxowofzkjllv.supabase.co";
+        const SUPABASE_KEY = "sb_publishable_OyEsfDZaWZv..."; // Utilise ta clé complète ici
+        
+        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        // INITIALISATION DU GRAPHIQUE
+        const ctx = document.getElementById('budgetChart').getContext('2d');
+        let budgetChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: ['Gouvernance Inclusive', 'Transparence Financière', 'Infrastructures & Ruelles'],
+                datasets: [{
+                    label: 'Budget Alloué (MGA)',
+                    data: [14400000, 9600000, 24000000],
+                    backgroundColor: ['#1e3a8a', '#0d9488', '#f59e0b'],
+                    borderRadius: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: { y: { beginAtZero: true } }
             }
-            document.getElementById('audit-pertes').innerText = totalPertes.toLocaleString() + ' Ar';
-            document.getElementById('audit-tasks-list').innerHTML = auditTasksHtml;
+        });
 
-            // --- MISE À JOUR VUE CONCERTATION ---
-            document.getElementById('concertation-count').innerText = concertations ? concertations.length : 0;
-            document.getElementById('resolutions-count').innerText = concertations ? concertations.length : 0;
-            let concertationTasksHtml = '';
+        // CALCULS DU SIMULATEUR
+        function updateSimulation() {
+            const budget = parseInt(document.getElementById('budgetSlider').value);
+            const complaints = parseInt(document.getElementById('complaintsSlider').value);
 
-            if (concertations && concertations.length > 0) {
-                concertations.forEach(item => {
-                    concertationTasksHtml += `
-                        <div class="task-item important">
-                            <div class="task-header">
-                                <span>[IMPORTANT P2] ${item.titre || 'Concertation'}</span>
-                                <span style="color: #0284c7;">${item.organisme_organisateur || ''}</span>
-                            </div>
-                            <div><strong>Résolutions à traduire en actions :</strong> ${item.resolutions || ''}</div>
-                            <div class="task-meta">Parties prenantes : ${item.parties_prenantes || 'N/A'} | Période : ${item.date_debut || ''} au ${item.date_fin || ''}</div>
-                        </div>
-                    `;
-                });
-            } else {
-                concertationTasksHtml = '<p>Aucun compte-rendu d\'atelier enregistré.</p>';
-            }
-            document.getElementById('concertation-tasks-list').innerHTML = concertationTasksHtml;
+            document.getElementById('budgetValue').innerText = budget.toLocaleString('fr-FR') + " MGA";
+            document.getElementById('complaintsValue').innerText = complaints + " signalements";
 
-            // --- MISE À JOUR VUE ENGINE (SYNTHÈSE) ---
-            document.getElementById('engine-summary-list').innerHTML = `
-                <div style="display: flex; gap: 20px; margin-top: 15px;">
-                    <div style="flex: 1; background: #f8fafc; padding: 15px; border-radius: 8px;">
-                        <h4 style="margin: 0 0 10px 0; color: #ef4444;">🔥 Urgences Terrain à résoudre</h4>
-                        <p style="font-size: 1.2rem; font-weight: bold; margin: 0;">${audits ? audits.length : 0} dossier(s) d'audit activement référencé(s)</p>
-                    </div>
-                    <div style="flex: 1; background: #f8fafc; padding: 15px; border-radius: 8px;">
-                        <h4 style="margin: 0 0 10px 0; color: #0284c7;">💡 Actions & Réformes à planifier</h4>
-                        <p style="font-size: 1.2rem; font-weight: bold; margin: 0;">${concertations ? concertations.length : 0} feuille(s) de route d'atelier(s)</p>
-                    </div>
-                </div>
-            `;
+            const ruellesSubventionnees = Math.floor((budget * 0.5) / 2500000);
+            const citoyensInscrits = complaints * 10;
 
-        } catch (err) {
-            console.error("Erreur Dashboard :", err);
+            document.getElementById('impactResult').innerText = 
+                `--> Permet la subvention directe de ${ruellesSubventionnees} ruelle(s) communautaire(s) et un impact direct sur ~${citoyensInscrits} citoyens !`;
+
+            budgetChart.data.datasets[0].data = [budget * 0.3, budget * 0.2, budget * 0.5];
+            budgetChart.update();
         }
-    }
 
-    // Chargement initial
-    loadDashboardData();
-</script>
+        // CHARGEMENT DES VRAIES DONNÉES DE LA TABLE analyses_swot
+        async function chargerDonneesReelles() {
+            const statusDiv = document.getElementById('statusMessage');
+            try {
+                let { data: analyses_swot, error } = await _supabase
+                    .from('analyses_swot')
+                    .select('*');
 
+                if (error) throw error;
+
+                const tbody = document.getElementById('swotTableBody');
+                
+                if (!analyses_swot || analyses_swot.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;">Aucune analyse trouvée dans la table 'analyses_swot'. Lance le script Python pour remplir la table.</td></tr>`;
+                    statusDiv.innerHTML = "✅ Connecté à Supabase (Table vide pour l'instant)";
+                    statusDiv.style.background = "#fef3c7";
+                    statusDiv.style.color = "#92400e";
+                } else {
+                    tbody.innerHTML = "";
+                    analyses_swot.forEach(row => {
+                        tbody.innerHTML += `
+                            <tr>
+                                <td><strong>${row.nom_fichier || '-'}</strong></td>
+                                <td>${row.actions_urgentes || '-'}</td>
+                                <td>${row.actions_importantes || '-'}</td>
+                                <td>${row.forces || '-'}</td>
+                                <td>${row.faiblesses || '-'}</td>
+                            </tr>
+                        `;
+                    });
+                    statusDiv.innerHTML = `✅ ${analyses_swot.length} analyse(s) chargée(s) avec succès depuis Supabase !`;
+                    statusDiv.style.background = "#dcfce7";
+                    statusDiv.style.color = "#166534";
+                }
+            } catch (err) {
+                console.error(err);
+                statusDiv.innerHTML = "❌ Erreur de connexion : " + err.message;
+                statusDiv.style.background = "#fee2e2";
+                statusDiv.style.color = "#991b1b";
+            }
+        }
+
+        // Exécution au chargement de la page
+        updateSimulation();
+        chargerDonneesReelles();
+    </script>
 </body>
 </html>
