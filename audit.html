@@ -335,7 +335,7 @@
 
         <div id="msgBox" class="msg"></div>
 
-        <!-- VUE DU RAPPORT FINAL GÉNÉRÉ -->
+        <!-- VUE DU RAPPORT FINAL GÉRÉRÉ -->
         <div id="report-view">
             <div class="report-header">
                 <h3>FICHE D'AUDIT CITOYEN & D'ALERTE DE GOUVERNANCE</h3>
@@ -390,7 +390,7 @@
         btn.innerText = "Enregistrement en cours...";
 
         try {
-            // 1. Gestion de l'upload du fichier dans le bucket documents_preuves (en minuscule !)
+            // Upload pièce jointe
             let preuveUrl = null;
             const fileInput = document.getElementById('proof-file');
             
@@ -412,7 +412,7 @@
                 preuveUrl = urlData.publicUrl;
             }
 
-            // 2. Collecte des checkboxes et radios
+            // Récupération des choix multiples
             const unlockWays = [];
             document.querySelectorAll('input[name="unlock-way"]:checked').forEach(cb => unlockWays.push(cb.value));
 
@@ -426,29 +426,39 @@
             const lossesAmt = parseFloat(document.getElementById('losses').value) || 0;
             const totalTransport = visits * costPerTrip;
 
-            // 3. Construction du payload correspondant à la table Supabase
+            const dateReadyVal = document.getElementById('date-ready').value || null;
+            const dateRemiseVal = document.getElementById('date-remise').value || null;
+
+            // Payload structuré : Chaque valeur dans sa propre colonne Supabase
             const payload = {
                 institution_principale: ministry,
                 service_concerne: service,
-                // On mappe les champs de l'observatoire vers la base
-                description: `Document: ${doc} | Délais officiels: ${legalDelay}j | Déblocage: ${unlockWays.join(', ')} | Impacts: ${impacts.join(', ')}`,
+                document_demande: doc,
+                date_depot: dateDeposit,
+                delai_officiel: legalDelay,
+                nombre_visites: visits,
+                voies_deblocage: unlockWays.join(', '),
+                date_pret: dateReadyVal,
+                date_remise: dateRemiseVal,
+                pression_corruption: bribeAsk,
+                reponse_pression: bribeRes,
+                montant_informel: bribeAmt,
                 cout_transport: totalTransport,
-                perte_financiere: lossesAmt + bribeAmt,
+                perte_financiere: lossesAmt,
+                impacts_psychosociaux: impacts.join(', '),
                 preuve_url: preuveUrl,
                 statut: 'en_attente'
             };
 
-            // Envoi dans la table active de Supabase
+            // Insertion dans Supabase
             const { error: insertError } = await _supabase
                 .from('audit_citoyen_signalements')
                 .insert([payload]);
 
             if (insertError) throw insertError;
 
-            // 4. Calculs pour l'affichage de la synthèse locale
+            // Affichage de la vue rapport locale
             const dDepositObj = new Date(dateDeposit);
-            const dateReadyVal = document.getElementById('date-ready').value;
-            const dateRemiseVal = document.getElementById('date-remise').value;
             let retentionMsg = "";
             let totalDelay = 0;
 
@@ -466,7 +476,6 @@
             let bribeTxt = `${bribeAsk} | Réponse: ${bribeRes}`;
             if (bribeAmt > 0) bribeTxt += ` (${bribeAmt.toLocaleString('fr-FR')} Ar)`;
 
-            // Remplissage de la vue rapport
             document.getElementById('r-ministry').innerText = ministry;
             document.getElementById('r-service').innerText = service;
             document.getElementById('r-doc').innerText = doc;
@@ -480,7 +489,6 @@
             document.getElementById('r-impacts').innerText = impacts.length > 0 ? impacts.join(', ') : 'Aucun';
             document.getElementById('r-file').innerText = fileInput.files.length > 0 ? fileInput.files[0].name : "Aucune";
 
-            // Bascule d'affichage
             document.getElementById('audit-form').style.display = 'none';
             document.getElementById('report-view').style.display = 'block';
 
