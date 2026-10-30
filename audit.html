@@ -3,101 +3,396 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Safidy - Audit Citoyen</title>
+    <title>Audit Citoyen & Observatoire</title>
+    <!-- SDK Supabase -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #f8fafc; padding: 20px; color: #1e293b; }
-        .form-card { max-width: 600px; margin: auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
-        h2 { color: #0284c7; margin-top: 0; text-align: center; }
-        .form-group { margin-bottom: 15px; }
-        label { display: block; font-weight: 600; font-size: 0.9rem; margin-bottom: 5px; color: #475569; }
-        input, select, textarea { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; font-size: 0.95rem; }
-        button { width: 100%; background: #0284c7; color: white; border: none; padding: 12px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 1rem; margin-top: 10px; }
-        button:hover { background: #0369a1; }
-        .msg { padding: 10px; border-radius: 6px; margin-top: 15px; display: none; text-align: center; font-weight: bold; }
+        :root {
+            --primary: #1e3a8a;
+            --primary-light: #3b82f6;
+            --danger: #dc2626;
+            --bg: #f8fafc;
+            --card: #ffffff;
+            --text: #0f172a;
+            --border: #cbd5e1;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+        }
+
+        .app-container {
+            width: 100%;
+            max-width: 600px;
+            background: var(--card);
+            min-height: 100vh;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            background-color: var(--primary);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 1.25rem;
+            font-weight: 700;
+        }
+
+        header p {
+            margin: 5px 0 0;
+            font-size: 0.85rem;
+            opacity: 0.9;
+        }
+
+        .badge-anon {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            margin-top: 8px;
+        }
+
+        .content {
+            padding: 20px;
+            flex: 1;
+        }
+
+        .section-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--primary);
+            border-bottom: 2px solid var(--primary-light);
+            padding-bottom: 6px;
+            margin-top: 20px;
+            margin-bottom: 15px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        input[type="date"],
+        select,
+        textarea,
+        input[type="file"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 0.9rem;
+            box-sizing: border-box;
+            background-color: #fff;
+        }
+
+        .checkbox-group, .radio-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .checkbox-item, .radio-item {
+            display: flex;
+            align-items: center;
+            font-size: 0.875rem;
+        }
+
+        .checkbox-item input, .radio-item input {
+            margin-right: 10px;
+        }
+
+        .alert-box {
+            background-color: #fef2f2;
+            border-left: 4px solid var(--danger);
+            padding: 12px;
+            margin-top: 15px;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            color: #991b1b;
+        }
+
+        .sub-box {
+            background-color: #f1f5f9;
+            padding: 12px;
+            border-radius: 6px;
+            margin-top: 10px;
+            border: 1px solid var(--border);
+        }
+
+        .btn-submit {
+            width: 100%;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 14px;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 25px;
+        }
+        .btn-submit:hover { background-color: #1d4ed8; }
+
+        .msg { padding: 12px; border-radius: 6px; margin-top: 15px; display: none; text-align: center; font-weight: bold; }
         .msg.success { background: #dcfce7; color: #15803d; }
         .msg.error { background: #fee2e2; color: #b91c1c; }
+
+        #report-view {
+            display: none;
+            background: #fff;
+            padding: 20px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+
+        .report-header {
+            border-bottom: 2px solid #000;
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .report-field {
+            margin-bottom: 10px;
+            font-size: 0.9rem;
+        }
+
+        .report-field span {
+            font-weight: bold;
+        }
+
+        .btn-reset {
+            background: #64748b;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-top: 15px;
+            width: 100%;
+        }
     </style>
 </head>
 <body>
 
-<div class="form-card">
-    <h2>📢 Audit Citoyen — Signalement</h2>
-    <form id="auditForm">
-        
-        <div class="form-group">
-            <label for="institution">Institution / Entité principale *</label>
-            <input type="text" id="institution" placeholder="Ex: Ministère des Finances, Université, BIANCO, Présidence..." required>
-        </div>
+<div class="app-container">
+    <header>
+        <h1>Audit Citoyen & Observatoire</h1>
+        <p>Plateforme indépendante de documentation des dysfonctionnements administratifs</p>
+        <div class="badge-anon">🔒 Anonymat strict et crypté garanti</div>
+    </header>
 
-        <div class="form-group">
-            <label for="service">Service ou Guichet concerné *</label>
-            <input type="text" id="service" placeholder="Ex: Service des Titres, Direction des Examens, Guichet des Permis..." required>
-        </div>
+    <div class="content">
+        <form id="audit-form">
+            
+            <!-- MODULE 1 -->
+            <div class="section-title">1. Service & Administration Concernée</div>
+            
+            <div class="form-group">
+                <label for="ministry">Ministère / Organisme de tutelle *</label>
+                <select id="ministry" required>
+                    <option value="">-- Sélectionner --</option>
+                    <option value="Santé Publique">Ministère de la Santé Publique</option>
+                    <option value="Agriculture et Élevage">Ministère de l'Agriculture et de l'Élevage</option>
+                    <option value="Industrie et Commerce">Ministère de l'Industrie, du Commerce et de la Consommation</option>
+                    <option value="Environnement">Ministère de l'Environnement et du Développement Durable</option>
+                    <option value="Autre">Autre administration</option>
+                </select>
+            </div>
 
-        <div class="form-group">
-            <label for="region">Région *</label>
-            <select id="region" required>
-                <option value="">-- Sélectionner une région --</option>
-                <option value="Analamanga">Analamanga</option>
-                <option value="Vakinankaratra">Vakinankaratra</option>
-                <option value="Atsinanana">Atsinanana</option>
-                <option value="Boeny">Boeny</option>
-                <option value="Autre">Autre région</option>
-            </select>
-        </div>
+            <div class="form-group">
+                <label for="service">Direction / Service / Laboratoire précis *</label>
+                <input type="text" id="service" placeholder="Ex: Laboratoire d'Analyse / Service des Agréments" required>
+            </div>
 
-        <div class="form-group">
-            <label for="motif">Motif principal du dysfonctionnement *</label>
-            <select id="motif" required>
-                <option value="Retards administratifs">Retards administratifs abusifs</option>
-                <option value="Pression / Corruption">Demande d'argent / Pression / Corruption</option>
-                <option value="Manque d'information">Manque d'information / Absence d'agent</option>
-                <option value="Autre">Autre tracasserie</option>
-            </select>
-        </div>
+            <!-- MODULE 2 -->
+            <div class="section-title">2. Délais, Rétention & Voies Informelles</div>
 
-        <div class="form-group">
-            <label for="description">Description détaillée des faits *</label>
-            <textarea id="description" rows="4" placeholder="Expliquez brièvement la situation subie..." required></textarea>
-        </div>
+            <div class="form-group">
+                <label for="doc-type">Document / Analyse demandé *</label>
+                <input type="text" id="doc-type" placeholder="Ex: Bulletin d'analyse microbiologique" required>
+            </div>
 
-        <div class="form-group">
-            <label for="fraisTransport">Frais de transport engagés inutilement (en Ariary)</label>
-            <input type="number" id="fraisTransport" placeholder="Ex: 10000" min="0">
-        </div>
+            <div class="form-group">
+                <label for="date-deposit">Date de dépôt effectif *</label>
+                <input type="date" id="date-deposit" required>
+            </div>
 
-        <div class="form-group">
-            <label for="perteFinanciere">Autre perte financière subie (en Ariary)</label>
-            <input type="number" id="perteFinanciere" placeholder="Ex: 50000" min="0">
-        </div>
+            <div class="form-group">
+                <label for="legal-delay">Délai officiel annoncé (en jours) *</label>
+                <input type="number" id="legal-delay" placeholder="Ex: 5" required>
+            </div>
 
-        <div class="form-group">
-            <label for="preuve">Pièce jointe / Preuve (Photo, PDF, Audio, Vidéo - Max 20 Mo)</label>
-            <input type="file" id="preuve" accept="image/*,application/pdf,audio/*,video/*">
-        </div>
+            <div class="form-group">
+                <label for="visits">Nombre de déplacements physiques effectués *</label>
+                <input type="number" id="visits" placeholder="Ex: 8" required>
+            </div>
 
-        <button type="submit" id="btnSubmit">Envoyer le signalement</button>
-    </form>
-    <div id="msgBox" class="msg"></div>
+            <div class="form-group">
+                <label>2.5. Comment avez-vous obtenu le statut réel ou le déblocage ?</label>
+                <div class="checkbox-group">
+                    <label class="checkbox-item"><input type="checkbox" name="unlock-way" value="Guichet officiel dans les délais"> Via le guichet officiel normal (dans les délais)</label>
+                    <label class="checkbox-item"><input type="checkbox" name="unlock-way" value="Alerte sur réseaux sociaux"> Après publication / alerte sur les réseaux sociaux (ex. Facebook)</label>
+                    <label class="checkbox-item"><input type="checkbox" name="unlock-way" value="Intervention contact informel"> Grâce à l'intervention d'une connaissance / contact informel</label>
+                    <label class="checkbox-item"><input type="checkbox" name="unlock-way" value="Envoi pièces sur WhatsApp/SMS"> Envoi direct de pièces justificatives par WhatsApp/SMS à un intermédiaire</label>
+                    <label class="checkbox-item"><input type="checkbox" name="unlock-way" value="Paiement informel"> En cédant à un paiement informel</label>
+                    <label class="checkbox-item"><input type="checkbox" name="unlock-way" value="Dossier toujours bloqué"> Dossier toujours bloqué / Aucune issue</label>
+                </div>
+            </div>
+
+            <div class="sub-box">
+                <div class="form-group">
+                    <label for="date-ready">Date à laquelle le document était réellement prêt/signé en interne :</label>
+                    <input type="date" id="date-ready">
+                </div>
+                <div class="form-group">
+                    <label for="date-remise">Date à laquelle le service vous l'a effectivement remis :</label>
+                    <input type="date" id="date-remise">
+                </div>
+                <div class="form-group">
+                    <label for="proof-file">Preuves de rétention / intervention (Capture WhatsApp, Email, Récépissé, Photo) :</label>
+                    <input type="file" id="proof-file" accept="image/*,.pdf,audio/*,video/*">
+                    <small style="color:#64748b;">*Les données personnelles sur les photos seront automatiquement anonymisées.</small>
+                </div>
+            </div>
+
+            <!-- MODULE 3 -->
+            <div class="section-title">3. Pression Informelle & Impact Économique</div>
+
+            <div class="sub-box">
+                <label><strong>3.3. Pression Informelle & Corruption</strong></label>
+                <div class="form-group" style="margin-top: 8px;">
+                    <label>Avez-vous subi une demande de paiement informel ?</label>
+                    <div class="radio-group">
+                        <label class="radio-item"><input type="radio" name="bribe-ask" value="Demande explicite"> Oui, demande explicite ("frais d'accélérateur", "café/carburant")</label>
+                        <label class="radio-item"><input type="radio" name="bribe-ask" value="Pression implicite"> Oui, pression implicite (retard artificiel pour faire céder)</label>
+                        <label class="radio-item"><input type="radio" name="bribe-ask" value="Non" checked> Non</label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Résultat face à cette pression :</label>
+                    <div class="radio-group">
+                        <label class="radio-item"><input type="radio" name="bribe-res" value="Refus de payer"> Refus de payer (attente prolongée / blocage)</label>
+                        <label class="radio-item"><input type="radio" name="bribe-res" value="Paiement effectué"> Paiement effectué par urgence / contrainte</label>
+                        <label class="radio-item"><input type="radio" name="bribe-res" value="Non applicable" checked> Non applicable</label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="bribe-amount">Montant informel versé (si applicable, en Ariary) :</label>
+                    <input type="number" id="bribe-amount" placeholder="Ex: 20000">
+                </div>
+            </div>
+
+            <div class="form-group" style="margin-top: 15px;">
+                <label for="transport-cost">Coût moyen d'un aller-retour (Transport + Photocopies) en Ariary *</label>
+                <input type="number" id="transport-cost" placeholder="Ex: 5000" required>
+            </div>
+
+            <div class="form-group">
+                <label for="losses">Pertes financières / commerciales subies (Marchandises périmées, contrats perdus) :</label>
+                <input type="number" id="losses" placeholder="Montant estimé en Ariary">
+            </div>
+
+            <!-- MODULE 4 -->
+            <div class="section-title">4. Impact Psycho-Social & Frustration</div>
+
+            <div class="form-group">
+                <label>Ressenti et impact émotionnel subi :</label>
+                <div class="checkbox-group">
+                    <label class="checkbox-item"><input type="checkbox" name="impact" value="Frustration extrême"> Frustration extrême / Sentiment d'être tourné en bourrique</label>
+                    <label class="checkbox-item"><input type="checkbox" name="impact" value="Anxiété et stress"> Anxiété et stress prolongé</label>
+                    <label class="checkbox-item"><input type="checkbox" name="impact" value="Peur des bureaux publics"> Peur / Traumatisme d'entrer dans un bureau administratif</label>
+                    <label class="checkbox-item"><input type="checkbox" name="impact" value="Incitation à l'informel"> Découragement poussant vers l'économie informelle</label>
+                </div>
+            </div>
+
+            <button type="button" class="btn-submit" id="btnSubmit" onclick="submitToSupabase()">ENREGISTRER LE SIGNALEMENT D'AUDIT CITOYEN</button>
+        </form>
+
+        <div id="msgBox" class="msg"></div>
+
+        <!-- VUE DU RAPPORT FINAL GÉNÉRÉ -->
+        <div id="report-view">
+            <div class="report-header">
+                <h3>FICHE D'AUDIT CITOYEN & D'ALERTE DE GOUVERNANCE</h3>
+                <p><small>Document de synthèse enregistré dans la base Supabase</small></p>
+            </div>
+
+            <div class="report-field"><span>Ministère :</span> <span id="r-ministry"></span></div>
+            <div class="report-field"><span>Service / Unité :</span> <span id="r-service"></span></div>
+            <div class="report-field"><span>Document concerné :</span> <span id="r-doc"></span></div>
+            <div class="report-field"><span>Déplacements imposés :</span> <span id="r-visits"></span> visites</div>
+            <div class="report-field"><span>Modes de déblocage :</span> <span id="r-unlock"></span></div>
+            
+            <div class="alert-box">
+                <strong>Analyse des délais :</strong> <span id="r-delay-days"></span> jours de dépassement net.
+                <div id="r-retention-text" style="margin-top: 5px; font-weight: bold;"></div>
+            </div>
+
+            <div class="report-field" style="margin-top: 15px;"><span>Pression / Corruption :</span> <span id="r-bribe"></span></div>
+            <div class="report-field"><span>Coût direct cumulé (Transports) :</span> <strong id="r-transport-total"></strong> Ariary</div>
+            <div class="report-field"><span>Pertes commerciales directes :</span> <strong id="r-losses-total"></strong> Ariary</div>
+            <div class="report-field"><span>Impacts psycho-sociaux :</span> <span id="r-impacts"></span></div>
+            <div class="report-field"><span>Pièce justificative :</span> <span id="r-file"></span></div>
+
+            <button class="btn-reset" onclick="resetForm()">Nouveau signalement</button>
+        </div>
+    </div>
 </div>
 
 <script>
+    // Configuration Supabase
     const SUPABASE_URL = 'https://tunanbanizxowofzkjql.supabase.co';
     const SUPABASE_KEY = 'sb_publishable_OyEsfDZaWZwhe0pkPkqtWQ_TPtbQ5iR';
     const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    document.getElementById('auditForm').addEventListener('submit', async (e) => {
-        e.preventDefault();
+    async function submitToSupabase() {
+        const ministry = document.getElementById('ministry').value;
+        const service = document.getElementById('service').value;
+        const doc = document.getElementById('doc-type').value;
+        const dateDeposit = document.getElementById('date-deposit').value;
+        const legalDelay = parseInt(document.getElementById('legal-delay').value);
+        const visits = parseInt(document.getElementById('visits').value);
+        const costPerTrip = parseInt(document.getElementById('transport-cost').value);
+        
+        if (!ministry || !service || !doc || !dateDeposit || isNaN(legalDelay) || isNaN(visits) || isNaN(costPerTrip)) {
+            alert("Veuillez remplir tous les champs obligatoires (*)");
+            return;
+        }
+
         const btn = document.getElementById('btnSubmit');
         const msgBox = document.getElementById('msgBox');
         btn.disabled = true;
-        btn.innerText = "Envoi en cours...";
-        msgBox.style.display = 'none';
+        btn.innerText = "Enregistrement en cours...";
 
         try {
+            // 1. Gestion de l'upload du fichier dans le bucket documents_preuves (en minuscule !)
             let preuveUrl = null;
-            const fileInput = document.getElementById('preuve');
+            const fileInput = document.getElementById('proof-file');
             
             if (fileInput.files.length > 0) {
                 const file = fileInput.files[0];
@@ -117,39 +412,99 @@
                 preuveUrl = urlData.publicUrl;
             }
 
+            // 2. Collecte des checkboxes et radios
+            const unlockWays = [];
+            document.querySelectorAll('input[name="unlock-way"]:checked').forEach(cb => unlockWays.push(cb.value));
+
+            const impacts = [];
+            document.querySelectorAll('input[name="impact"]:checked').forEach(cb => impacts.push(cb.value));
+
+            const bribeAsk = document.querySelector('input[name="bribe-ask"]:checked').value;
+            const bribeRes = document.querySelector('input[name="bribe-res"]:checked').value;
+            const bribeAmt = parseFloat(document.getElementById('bribe-amount').value) || 0;
+
+            const lossesAmt = parseFloat(document.getElementById('losses').value) || 0;
+            const totalTransport = visits * costPerTrip;
+
+            // 3. Construction du payload correspondant à la table Supabase
             const payload = {
-                institution_principale: document.getElementById('institution').value,
-                service_concerne: document.getElementById('service').value,
-                region: document.getElementById('region').value,
-                motif: document.getElementById('motif').value,
-                description: document.getElementById('description').value,
-                cout_transport: parseFloat(document.getElementById('fraisTransport').value) || 0,
-                perte_financiere: parseFloat(document.getElementById('perteFinanciere').value) || 0,
+                institution_principale: ministry,
+                service_concerne: service,
+                // On mappe les champs de l'observatoire vers la base
+                description: `Document: ${doc} | Délais officiels: ${legalDelay}j | Déblocage: ${unlockWays.join(', ')} | Impacts: ${impacts.join(', ')}`,
+                cout_transport: totalTransport,
+                perte_financiere: lossesAmt + bribeAmt,
                 preuve_url: preuveUrl,
                 statut: 'en_attente'
             };
 
+            // Envoi dans la table active de Supabase
             const { error: insertError } = await _supabase
                 .from('audit_citoyen_signalements')
                 .insert([payload]);
 
             if (insertError) throw insertError;
 
+            // 4. Calculs pour l'affichage de la synthèse locale
+            const dDepositObj = new Date(dateDeposit);
+            const dateReadyVal = document.getElementById('date-ready').value;
+            const dateRemiseVal = document.getElementById('date-remise').value;
+            let retentionMsg = "";
+            let totalDelay = 0;
+
+            const endDate = dateRemiseVal ? new Date(dateRemiseVal) : new Date();
+            const diffDays = Math.ceil(Math.abs(endDate - dDepositObj) / (1000 * 60 * 60 * 24));
+            totalDelay = diffDays - legalDelay;
+
+            if (dateReadyVal && dateRemiseVal) {
+                const dReady = new Date(dateReadyVal);
+                const dRemise = new Date(dateRemiseVal);
+                const rDays = Math.ceil(Math.abs(dRemise - dReady) / (1000 * 60 * 60 * 24));
+                retentionMsg = `⚠️ RETENTION ABUSIVE CONFIRMÉE : Document prêt depuis le ${dReady.toLocaleDateString('fr-FR')}, mais gardé secret pendant ${rDays} jours.`;
+            }
+
+            let bribeTxt = `${bribeAsk} | Réponse: ${bribeRes}`;
+            if (bribeAmt > 0) bribeTxt += ` (${bribeAmt.toLocaleString('fr-FR')} Ar)`;
+
+            // Remplissage de la vue rapport
+            document.getElementById('r-ministry').innerText = ministry;
+            document.getElementById('r-service').innerText = service;
+            document.getElementById('r-doc').innerText = doc;
+            document.getElementById('r-visits').innerText = visits;
+            document.getElementById('r-unlock').innerText = unlockWays.length > 0 ? unlockWays.join(', ') : 'Non spécifié';
+            document.getElementById('r-delay-days').innerText = totalDelay > 0 ? totalDelay : 0;
+            document.getElementById('r-retention-text').innerText = retentionMsg;
+            document.getElementById('r-bribe').innerText = bribeTxt;
+            document.getElementById('r-transport-total').innerText = totalTransport.toLocaleString('fr-FR');
+            document.getElementById('r-losses-total').innerText = lossesAmt.toLocaleString('fr-FR');
+            document.getElementById('r-impacts').innerText = impacts.length > 0 ? impacts.join(', ') : 'Aucun';
+            document.getElementById('r-file').innerText = fileInput.files.length > 0 ? fileInput.files[0].name : "Aucune";
+
+            // Bascule d'affichage
+            document.getElementById('audit-form').style.display = 'none';
+            document.getElementById('report-view').style.display = 'block';
+
             msgBox.className = 'msg success';
-            msgBox.innerText = " Signalement enregistré avec succès ! Merci de votre contribution.";
+            msgBox.innerText = "✅ Signalement enregistré avec succès dans Supabase !";
             msgBox.style.display = 'block';
-            document.getElementById('auditForm').reset();
 
         } catch (err) {
-            console.error("Erreur Audit :", err);
+            console.error("Erreur:", err);
             msgBox.className = 'msg error';
             msgBox.innerText = "Erreur lors de l'envoi : " + err.message;
             msgBox.style.display = 'block';
         } finally {
             btn.disabled = false;
-            btn.innerText = "Envoyer le signalement";
+            btn.innerText = "ENREGISTRER LE SIGNALEMENT D'AUDIT CITOYEN";
         }
-    });
+    }
+
+    function resetForm() {
+        document.getElementById('audit-form').reset();
+        document.getElementById('audit-form').style.display = 'block';
+        document.getElementById('report-view').style.display = 'none';
+        document.getElementById('msgBox').style.display = 'none';
+    }
 </script>
 
 </body>
