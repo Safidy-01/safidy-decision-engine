@@ -4,9 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Safidy 01 Audit Citoyen - Dashboard Décideur</title>
-    <!-- Chart.js pour les graphiques -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- SDK Supabase pour se connecter aux vraies données -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
@@ -43,6 +41,45 @@
             border-radius: 12px;
             padding: 18px;
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+        .filter-container {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            align-items: flex-end;
+            background: #eff6ff;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #bfdbfe;
+            margin-bottom: 15px;
+        }
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .filter-group label {
+            font-size: 0.85rem;
+            font-weight: bold;
+            color: var(--primary);
+        }
+        .filter-group input {
+            padding: 8px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+        }
+        .btn-filter {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 9px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .btn-filter:hover {
+            background: #1e40af;
         }
         .slider-group { margin-bottom: 15px; }
         .slider-group label { display: block; font-weight: bold; margin-bottom: 5px; font-size: 0.9rem; }
@@ -70,9 +107,25 @@
         <p><strong>Vision :</strong> Transformez chaque donnée d'audit citoyen en action publique traçable et mesurable.</p>
     </div>
 
+    <!-- PANNEAU DE FILTRAGE TEMPOREL -->
+    <div class="card">
+        <h2>📅 Période d'Analyse et de Traitement (Bailleur)</h2>
+        <div class="filter-container">
+            <div class="filter-group">
+                <label for="filterDateDebut">Date Début :</label>
+                <input type="date" id="filterDateDebut" value="2026-03-01">
+            </div>
+            <div class="filter-group">
+                <label for="filterDateFin">Date Fin :</label>
+                <input type="date" id="filterDateFin" value="2026-03-31">
+            </div>
+            <button class="btn-filter" onclick="chargerDonneesReelles()">🔍 Filtrer les données</button>
+        </div>
+        <div id="statusMessage" class="status-box">Connexion à Supabase...</div>
+    </div>
+
     <!-- SIMULATEUR & GRAPHES -->
     <div class="grid-container">
-        
         <div class="card">
             <h2>🎛️ Simulateur d'Impact Budget & Terrain</h2>
             
@@ -96,20 +149,41 @@
                     Calcul en cours...
                 </p>
             </div>
-            
-            <div id="statusMessage" class="status-box">Connexion à Supabase...</div>
         </div>
 
         <div class="card">
             <h2>📊 Répartition Budgétaire Stratégique</h2>
             <canvas id="budgetChart"></canvas>
         </div>
-
     </div>
 
-    <!-- TABLEAU DE PILOTAGE -->
-    <div class="card" style="margin-top: 20px;">
-        <h2>📋 Données d'Analyse Réelles (Supabase)</h2>
+    <!-- TABLEAU DES FICHES ACTION SMART -->
+    <div class="card">
+        <h2>🎯 Fiches d'Action SMART (Période Sélectionnée)</h2>
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Titre Action</th>
+                        <th>Priorité</th>
+                        <th>Responsable</th>
+                        <th>Période Début</th>
+                        <th>Période Fin</th>
+                        <th>Statut</th>
+                    </tr>
+                </thead>
+                <tbody id="fichesTableBody">
+                    <tr>
+                        <td colspan="6" style="text-align:center;">Chargement des fiches d'action...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- TABLEAU DE PILOTAGE SWOT -->
+    <div class="card">
+        <h2>📋 Synthèse d'Analyse SWOT (Supabase)</h2>
         <div class="table-wrapper">
             <table>
                 <thead>
@@ -131,13 +205,11 @@
     </div>
 
     <script>
-        // CONFIGURATION SUPABASE RÉELLE
-        const SUPABASE_URL = "https://tunanbanizxowofzkjllv.supabase.co";
-        const SUPABASE_KEY = "sb_publishable_OyEsfDZaWZwhe0pkPkqtWQ_TPtbQ5iR"; // Utilise ta clé complète ici
+        const SUPABASE_URL = "https://tunanbanizxowofzkjql.supabase.co";
+        const SUPABASE_KEY = "sb_publishable_OyEsfDZaWZwhe0pkPkqtWQ_TPtbQ5iR";
         
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        // INITIALISATION DU GRAPHIQUE
         const ctx = document.getElementById('budgetChart').getContext('2d');
         let budgetChart = new Chart(ctx, {
             type: 'bar',
@@ -157,7 +229,6 @@
             }
         });
 
-        // CALCULS DU SIMULATEUR
         function updateSimulation() {
             const budget = parseInt(document.getElementById('budgetSlider').value);
             const complaints = parseInt(document.getElementById('complaintsSlider').value);
@@ -175,27 +246,50 @@
             budgetChart.update();
         }
 
-        // CHARGEMENT DES VRAIES DONNÉES DE LA TABLE analyses_swot
         async function chargerDonneesReelles() {
             const statusDiv = document.getElementById('statusMessage');
+            const dateDebut = document.getElementById('filterDateDebut').value;
+            const dateFin = document.getElementById('filterDateFin').value;
+
             try {
-                let { data: analyses_swot, error } = await _supabase
-                    .from('analyses_swot')
-                    .select('*');
+                // 1. Chargement des Fiches d'Action SMART filtrées par période
+                let queryFiches = _supabase.from('fiches_action_smart').select('*');
+                if (dateDebut) queryFiches = queryFiches.gte('date_debut', dateDebut);
+                if (dateFin) queryFiches = queryFiches.lte('date_fin', dateFin);
 
-                if (error) throw error;
+                const { data: fiches, error: errFiches } = await queryFiches;
+                if (errFiches) throw errFiches;
 
-                const tbody = document.getElementById('swotTableBody');
-                
-                if (!analyses_swot || analyses_swot.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;">Aucune analyse trouvée dans la table 'analyses_swot'. Lance le script Python pour remplir la table.</td></tr>`;
-                    statusDiv.innerHTML = "✅ Connecté à Supabase (Table vide pour l'instant)";
-                    statusDiv.style.background = "#fef3c7";
-                    statusDiv.style.color = "#92400e";
+                const tbodyFiches = document.getElementById('fichesTableBody');
+                if (!fiches || fiches.length === 0) {
+                    tbodyFiches.innerHTML = `<tr><td colspan="6" style="text-align:center;">Aucune fiche d'action enregistrée pour cette période.</td></tr>`;
                 } else {
-                    tbody.innerHTML = "";
+                    tbodyFiches.innerHTML = "";
+                    fiches.forEach(row => {
+                        tbodyFiches.innerHTML += `
+                            <tr>
+                                <td><strong>${row.titre_action || '-'}</strong></td>
+                                <td>${row.priorite || '-'}</td>
+                                <td>${row.responsable || '-'}</td>
+                                <td>${row.date_debut || '-'}</td>
+                                <td>${row.date_fin || '-'}</td>
+                                <td>${row.statut || '-'}</td>
+                            </tr>
+                        `;
+                    });
+                }
+
+                // 2. Chargement des Analyses SWOT
+                const { data: analyses_swot, error: errSwot } = await _supabase.from('analyses_swot').select('*');
+                if (errSwot) throw errSwot;
+
+                const tbodySwot = document.getElementById('swotTableBody');
+                if (!analyses_swot || analyses_swot.length === 0) {
+                    tbodySwot.innerHTML = `<tr><td colspan="5" style="text-align:center;">Aucune analyse SWOT trouvée.</td></tr>`;
+                } else {
+                    tbodySwot.innerHTML = "";
                     analyses_swot.forEach(row => {
-                        tbody.innerHTML += `
+                        tbodySwot.innerHTML += `
                             <tr>
                                 <td><strong>${row.nom_fichier || '-'}</strong></td>
                                 <td>${row.actions_urgentes || '-'}</td>
@@ -205,19 +299,20 @@
                             </tr>
                         `;
                     });
-                    statusDiv.innerHTML = `✅ ${analyses_swot.length} analyse(s) chargée(s) avec succès depuis Supabase !`;
-                    statusDiv.style.background = "#dcfce7";
-                    statusDiv.style.color = "#166534";
                 }
+
+                statusDiv.innerHTML = `✅ Données chargées avec succès pour la période du ${dateDebut} au ${dateFin} !`;
+                statusDiv.style.background = "#dcfce7";
+                statusDiv.style.color = "#166534";
+
             } catch (err) {
                 console.error(err);
-                statusDiv.innerHTML = "❌ Erreur de connexion : " + err.message;
+                statusDiv.innerHTML = "❌ Erreur de chargement : " + err.message;
                 statusDiv.style.background = "#fee2e2";
                 statusDiv.style.color = "#991b1b";
             }
         }
 
-        // Exécution au chargement de la page
         updateSimulation();
         chargerDonneesReelles();
     </script>
